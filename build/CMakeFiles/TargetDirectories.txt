@@ -1,0 +1,7 @@
+/home/khurem/Programming Projects/massspring/build/CMakeFiles/rebuild_cache.dir
+/home/khurem/Programming Projects/massspring/build/CMakeFiles/edit_cache.dir
+/home/khurem/Programming Projects/massspring/build/CMakeFiles/utgraphicsutil.dir
+/home/khurem/Programming Projects/massspring/build/CMakeFiles/pmdreader.dir
+/home/khurem/Programming Projects/massspring/build/src/CMakeFiles/rebuild_cache.dir
+/home/khurem/Programming Projects/massspring/build/src/CMakeFiles/cloth.dir
+/home/khurem/Programming Projects/massspring/build/src/CMakeFiles/edit_cache.dir
