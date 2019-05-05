@@ -43,6 +43,8 @@ src/CMakeFiles/cloth.dir/main.cc.o
  /home/khurem/Programming Projects/massspring/src/procedure_geometry.h
  /home/khurem/Programming Projects/massspring/src/render_pass.h
  /home/khurem/Programming Projects/massspring/src/shader_uniform.h
+ /home/khurem/Programming Projects/massspring/src/shaders/bend_spring.frag
+ /home/khurem/Programming Projects/massspring/src/shaders/bend_spring.vert
  /home/khurem/Programming Projects/massspring/src/shaders/blending.vert
  /home/khurem/Programming Projects/massspring/src/shaders/bone.frag
  /home/khurem/Programming Projects/massspring/src/shaders/bone.vert
@@ -58,6 +60,8 @@ src/CMakeFiles/cloth.dir/main.cc.o
  /home/khurem/Programming Projects/massspring/src/shaders/preview.vert
  /home/khurem/Programming Projects/massspring/src/shaders/scroll.frag
  /home/khurem/Programming Projects/massspring/src/shaders/scroll.vert
+ /home/khurem/Programming Projects/massspring/src/shaders/spring.frag
+ /home/khurem/Programming Projects/massspring/src/shaders/spring.vert
  /home/khurem/Programming Projects/massspring/src/texture_to_render.h
  /home/khurem/Programming Projects/massspring/src/tictoc.h
 src/CMakeFiles/cloth.dir/procedure_geometry.cc.o

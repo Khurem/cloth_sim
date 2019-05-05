@@ -99,6 +99,24 @@ const char* cloth_fragment_shader =
 #include "shaders/cloth.frag"
 ;
 
+const char* spring_vertex_shader =
+#include "shaders/spring.vert"
+;
+
+const char* spring_fragment_shader =
+#include "shaders/spring.frag"
+;
+
+
+const char* bend_spring_vertex_shader =
+#include "shaders/bend_spring.vert"
+;
+
+
+const char* bend_spring_fragment_shader =
+#include "shaders/bend_spring.frag"
+;
+
 
 
 void ErrorCallback(int error, const char* description) {
@@ -146,8 +164,8 @@ int main(int argc, char* argv[])
 	std::vector<glm::vec4> floor_vertices;
 	std::vector<glm::uvec3> floor_faces;
 	create_floor(floor_vertices, floor_faces);
-	int cloth_x_size = 21;
-	int cloth_z_size = 21;
+	int cloth_x_size = 10;
+	int cloth_z_size = 10;
 	Cloth cloth(cloth_x_size, cloth_z_size);
 	MassSpringSystem ms_system(cloth_x_size, cloth_z_size);
 	TicTocTimer *timer = new TicTocTimer;
@@ -331,6 +349,24 @@ int main(int argc, char* argv[])
 			{ "fragment_color" }
 			);
 
+	RenderDataInput spring_pass_input;
+	spring_pass_input.assign(0, "vertex_position", cloth.spring_vertices.data(), cloth.spring_vertices.size(), 3, GL_FLOAT);
+
+	RenderPass spring_pass(-1,
+			spring_pass_input,
+			{ spring_vertex_shader, nullptr, spring_fragment_shader },
+			{ std_model, std_view, std_proj, std_light },
+			{ "fragment_color" }
+			);
+	RenderDataInput bend_spring_pass_input;
+	bend_spring_pass_input.assign(0, "vertex_position", cloth.bend_spring_vertices.data(), cloth.bend_spring_vertices.size(), 3, GL_FLOAT);
+
+	RenderPass bend_spring_pass(-1,
+			bend_spring_pass_input,
+			{ bend_spring_vertex_shader, nullptr, bend_spring_fragment_shader },
+			{ std_model, std_view, std_proj, std_light },
+			{ "fragment_color" }
+			);
 	// Setup the render pass for drawing bones
 	// FIXME: You won't see the bones until Skeleton::joints were properly
 	//        initialized
@@ -440,6 +476,8 @@ int main(int argc, char* argv[])
 
 	bool draw_floor = true;
 	bool draw_cloth = false;
+	bool draw_spring = true;
+	bool draw_bend_spring = true;
 	bool draw_tri_cloth = true;
 	float aspect = 0.0f;
 	std::cout << "center = " << mesh.getCenter() << "\n";
@@ -602,6 +640,24 @@ int main(int argc, char* argv[])
 			CHECK_GL_ERROR(glDrawElements(GL_LINES,
 			                              ms_system.line_indices.size() * 2,
 			                              GL_UNSIGNED_INT, 0));
+		}
+
+		if (draw_spring) {
+			spring_pass.updateVBO(0, cloth.spring_vertices.data(), cloth.spring_vertices.size());
+			spring_pass.setup();
+
+			CHECK_GL_ERROR(glDrawArrays(GL_LINES,
+										0,
+		                              	cloth.spring_vertices.size()));
+		}
+
+		if (draw_bend_spring) {
+			bend_spring_pass.updateVBO(0, cloth.bend_spring_vertices.data(), cloth.bend_spring_vertices.size());
+			bend_spring_pass.setup();
+
+			CHECK_GL_ERROR(glDrawArrays(GL_LINES,
+										0,
+		                              	cloth.bend_spring_vertices.size()));
 		}
 
 				if (draw_tri_cloth) {

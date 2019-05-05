@@ -91,6 +91,8 @@ glm/gtc/quaternion.hpp
 -
 mmdadapter.h
 -
+unordered_set
+-
 
 /home/khurem/Programming Projects/massspring/src/config.h
 
@@ -529,6 +531,14 @@ shaders/cloth.vert
 /home/khurem/Programming Projects/massspring/src/shaders/cloth.vert
 shaders/cloth.frag
 /home/khurem/Programming Projects/massspring/src/shaders/cloth.frag
+shaders/spring.vert
+/home/khurem/Programming Projects/massspring/src/shaders/spring.vert
+shaders/spring.frag
+/home/khurem/Programming Projects/massspring/src/shaders/spring.frag
+shaders/bend_spring.vert
+/home/khurem/Programming Projects/massspring/src/shaders/bend_spring.vert
+shaders/bend_spring.frag
+/home/khurem/Programming Projects/massspring/src/shaders/bend_spring.frag
 
 /home/khurem/Programming Projects/massspring/src/procedure_geometry.cc
 procedure_geometry.h
@@ -578,6 +588,10 @@ iostream
 glm/gtx/io.hpp
 -
 
+/home/khurem/Programming Projects/massspring/src/shaders/bend_spring.frag
+
+/home/khurem/Programming Projects/massspring/src/shaders/bend_spring.vert
+
 /home/khurem/Programming Projects/massspring/src/shaders/blending.vert
 
 /home/khurem/Programming Projects/massspring/src/shaders/bone.frag
@@ -607,6 +621,10 @@ glm/gtx/io.hpp
 /home/khurem/Programming Projects/massspring/src/shaders/scroll.frag
 
 /home/khurem/Programming Projects/massspring/src/shaders/scroll.vert
+
+/home/khurem/Programming Projects/massspring/src/shaders/spring.frag
+
+/home/khurem/Programming Projects/massspring/src/shaders/spring.vert
 
 /home/khurem/Programming Projects/massspring/src/texture_to_render.h
 
