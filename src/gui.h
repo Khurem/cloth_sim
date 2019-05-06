@@ -7,6 +7,8 @@
 #include <GLFW/glfw3.h>
 #include "cxxtimer.hpp"
 
+#define PICK_RAY_LEN 1000.0f
+
 struct Mesh;
 
 /*
@@ -34,10 +36,9 @@ float time_speed_ = 1.0;
 	void mousePosCallback(double mouse_x, double mouse_y);
 	void mouseButtonCallback(int button, int action, int mods);
 	void mouseScrollCallback(double dx, double dy);
-	void assignMassSpringSystem(MassSpringSystem* system);
-		bool toResetSystem() {return reset_ms_system_;}
 	void clearResetFlag() {reset_ms_system_ = false;}
 	void updateMatrices();
+	void assignCloth(Cloth* cloth) {cloth_ = cloth;}
 	MatrixPointers getMatrixPointers() const;
 
 	static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -55,8 +56,6 @@ float time_speed_ = 1.0;
 	const float* getLightPositionPtr() const { return &light_position_[0]; }
 	bool upSample = false;
 
-	bool toRandomDisturb() {return to_random_disturb_;}
-	void clearDisturbFlag() {to_random_disturb_ = false;}
 	int getCurrentBone() const { return current_bone_; }
 	const int* getCurrentBonePointer() const { return &current_bone_; }
 	bool setCurrentBone(int i);
@@ -70,7 +69,7 @@ float time_speed_ = 1.0;
 private:
 	GLFWwindow* window_;
 	Mesh* mesh_;
-
+	Cloth* cloth_;
 	int window_width_, window_height_;
 	int view_width_, view_height_;
 	int preview_height_;
@@ -82,7 +81,6 @@ private:
 	bool transparent_ = false;
 	int current_bone_ = -1;
 	int current_button_ = -1;
-	bool to_random_disturb_ = false;
 	float roll_speed_ = M_PI / 64.0f;
 	float last_x_ = 0.0f, last_y_ = 0.0f, current_x_ = 0.0f, current_y_ = 0.0f;
 	float camera_distance_ = 30.0;

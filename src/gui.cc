@@ -47,10 +47,7 @@ void GUI::assignMesh(Mesh* mesh)
 	center_ = mesh_->getCenter();
 }
 
-void GUI::assignMassSpringSystem(MassSpringSystem* system) 
-{
-	ms_system_ = system;
-}
+
 
 void GUI::keyCallback(int key, int scancode, int action, int mods)
 {
@@ -59,7 +56,7 @@ void GUI::keyCallback(int key, int scancode, int action, int mods)
 		std::cerr << "Key: " << key << " action: " << action << std::endl;
 #endif
 	if (key == GLFW_KEY_J && action == GLFW_RELEASE) {
-		to_random_disturb_ = true;
+	
 	}
 
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
@@ -98,11 +95,11 @@ void GUI::keyCallback(int key, int scancode, int action, int mods)
 	} else if (key == GLFW_KEY_C && action != GLFW_RELEASE) {
 		fps_mode_ = !fps_mode_;
 	} else if (key == GLFW_KEY_LEFT_BRACKET && action == GLFW_RELEASE) {
-		time_speed_ /= 5.0;
+		time_speed_ /= 2.0;
 	} else if (key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_RELEASE) {
-		time_speed_ *= 5.0;
+		time_speed_ *= 2.0;
 	} else if (key == GLFW_KEY_T && action != GLFW_RELEASE) {
-		transparent_ = !transparent_;
+		
 	}
 
 	// FIXME: implement other controls here.
@@ -145,7 +142,6 @@ void GUI::keyCallback(int key, int scancode, int action, int mods)
 			mesh_->setFirstFrame();
 		}
 		mesh_->updateAnimation();
-		reset_ms_system_ = true;
 
 	}else if (key == GLFW_KEY_V && action != GLFW_RELEASE) {
 		if(mesh_->keyframes.size() > 0){
@@ -373,33 +369,30 @@ if (mouse_x > view_width_)
 			return ;
 	}
 
-	// FIXME: highlight bones that have been moused over
-	current_bone_ = -1;
-	glm::vec3 mouse = glm::unProject(glm::vec3(current_x_, current_y_, 1.0f),view_matrix_,projection_matrix_,viewport);
-	glm::vec3 r_Direction = glm::normalize(mouse - eye_);
-	glm::vec3 r_End = eye_ + 100.0f * r_Direction;
-	float min_distance = std::numeric_limits<float>::max();
-	for(int i = 0; i < mesh_->getNumberOfBones(); i++) {	
-		int parent_ID = mesh_->skeleton.joints[i].parent_index;
-		if(parent_ID == -1) {
-			continue;	// this joint is a root.
-		}
-		glm::vec3 bone_start = mesh_->getJoint(i).position;
+	// std::cout << "mouse position: " << glm::to_string(glm::vec2(mouse_x, mouse_y)) << std::endl;
+	glm::vec3 mouse_pos = glm::unProject(glm::vec3(current_x_, current_y_, 1.0f),
+											view_matrix_,
+											projection_matrix_,
+											viewport);
+	// std::cout << "current position in world coords: (" << mouse_pos.x << ", " << mouse_pos.y << ", " << mouse_pos.z << ")" << std::endl;
 
-		glm::vec3 bone_end = mesh_->getJoint(parent_ID).position;
-		// float disto = 1.0;
-		// if(disto < min_distance) {
-		// 	printf("never once did it reach this point\n");
-		// 	min_distance = disto;
-		// 	current_bone_ = i;
-		// }
-		float curr_distance = line_segment_distance(eye_, r_End, bone_start, bone_end);
-		if(curr_distance < kCylinderRadius && curr_distance < min_distance) {
-			min_distance = curr_distance;
-			current_bone_ = i;
-		// printf("current bone is %d\n", mesh_->skeleton.joints[current_bone_].parent_index);
-}
+	// pick spring, similar to bone picking in animation project.
+	{
+		glm::vec3 pick_ray_direct = glm::normalize(mouse_pos - eye_);
+		glm::vec3 pick_ray_end = eye_ + PICK_RAY_LEN * pick_ray_direct;
+		cloth_->pick_ray_start = eye_;
+		cloth_->pick_ray_end = pick_ray_end;
 	}
+
+	if(drag_state_ && current_button_ == GLFW_MOUSE_BUTTON_LEFT) {
+		cloth_->to_tear = true;
+	}
+	else {
+		cloth_->to_tear = false;
+	}
+
+	
+	
 }
 
 void GUI::mouseButtonCallback(int button, int action, int mods)

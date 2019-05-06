@@ -164,10 +164,10 @@ int main(int argc, char* argv[])
 	std::vector<glm::vec4> floor_vertices;
 	std::vector<glm::uvec3> floor_faces;
 	create_floor(floor_vertices, floor_faces);
-	int cloth_x_size = 10;
-	int cloth_z_size = 10;
+	int cloth_x_size = 11;
+	int cloth_z_size = 11;
 	Cloth cloth(cloth_x_size, cloth_z_size);
-	MassSpringSystem ms_system(cloth_x_size, cloth_z_size);
+	gui.assignCloth(&cloth);
 	TicTocTimer *timer = new TicTocTimer;
 	*timer = tic();
 	std::vector<glm::vec4> prev_vertices;
@@ -349,15 +349,15 @@ int main(int argc, char* argv[])
 			{ "fragment_color" }
 			);
 
-	RenderDataInput spring_pass_input;
-	spring_pass_input.assign(0, "vertex_position", cloth.spring_vertices.data(), cloth.spring_vertices.size(), 3, GL_FLOAT);
-
-	RenderPass spring_pass(-1,
-			spring_pass_input,
+	RenderDataInput struct_spring_pass_input;
+	struct_spring_pass_input.assign(0, "vertex_position", cloth.struct_spring_vertices.data(), cloth.struct_spring_vertices.size(), 3, GL_FLOAT);
+	
+	RenderPass struct_spring_pass(-1,
+			struct_spring_pass_input,
 			{ spring_vertex_shader, nullptr, spring_fragment_shader },
 			{ std_model, std_view, std_proj, std_light },
 			{ "fragment_color" }
-			);
+);
 	RenderDataInput bend_spring_pass_input;
 	bend_spring_pass_input.assign(0, "vertex_position", cloth.bend_spring_vertices.data(), cloth.bend_spring_vertices.size(), 3, GL_FLOAT);
 
@@ -403,16 +403,7 @@ int main(int argc, char* argv[])
 	//        Otherwise do whatever you like.
 
 	
-	RenderDataInput tri_cloth_pass_input;
-	tri_cloth_pass_input.assign(0, "vertex_position", cloth.vertices.data(), cloth.vertices.size(), 3, GL_FLOAT);
-	tri_cloth_pass_input.assign(1, "uv", cloth.cloth_uv_coords.data(), cloth.cloth_uv_coords.size(), 2, GL_FLOAT);
-
-	RenderPass tri_cloth_pass(-1,
-			tri_cloth_pass_input,
-			{ cloth_vertex_shader, nullptr, cloth_fragment_shader },
-			{ std_model, std_view, std_proj, std_light },
-			{ "fragment_color" }
-			);
+	
 
 	RenderDataInput preview_pass_input;
 	preview_pass_input.assign(0, "vertex_position", prev_vertices.data(), prev_vertices.size(), 4, GL_FLOAT);
@@ -464,8 +455,8 @@ int main(int argc, char* argv[])
 	// 		);
 
 	RenderDataInput cloth_pass_input;
-	cloth_pass_input.assign(0, "vertex_position", ms_system.node_positions.data(), ms_system.node_positions.size(), 3, GL_FLOAT);
-	cloth_pass_input.assignIndex(ms_system.line_indices.data(), ms_system.line_indices.size(), 2);
+	cloth_pass_input.assign(0, "vertex_position", cloth.vertices.data(), cloth.vertices.size(), 3, GL_FLOAT);
+	cloth_pass_input.assign(1, "uv", cloth.cloth_uv_coords.data(), cloth.cloth_uv_coords.size(), 2, GL_FLOAT);
 
 	RenderPass cloth_pass(-1,
 			cloth_pass_input,
@@ -474,11 +465,10 @@ int main(int argc, char* argv[])
 			{ "fragment_color" }
 			);
 
-	bool draw_floor = true;
+	bool draw_floor = false;
 	bool draw_cloth = false;
-	bool draw_spring = true;
 	bool draw_bend_spring = true;
-	bool draw_tri_cloth = true;
+	bool draw_struct_spring = true;
 	float aspect = 0.0f;
 	std::cout << "center = " << mesh.getCenter() << "\n";
 
@@ -561,15 +551,10 @@ int main(int argc, char* argv[])
 			                              floor_faces.size() * 3,
 			                              GL_UNSIGNED_INT, 0));
 		}
-		if (gui.toResetSystem()) {
-			ms_system.resetSystem();
-			gui.clearResetFlag();
-		}
-		if (gui.toRandomDisturb()) {
-			ms_system.randomDisturb();
-			gui.clearDisturbFlag();
-		}
+
+		
 		float delta_t = (float) toc(timer) * gui.getTimeSpeed();
+		delta_t *= 1.0;
 		cloth.animate(delta_t);
 		// Draw the model
 // 		if (draw_object) {
@@ -611,12 +596,8 @@ int main(int argc, char* argv[])
 			                              floor_faces.size() * 3,
 			                              GL_UNSIGNED_INT, 0));
 
-			cloth_pass.updateVBO(0, ms_system.node_positions.data(), ms_system.node_positions.size());
-			cloth_pass.setup();
-			// Draw our triangles.
-			CHECK_GL_ERROR(glDrawElements(GL_LINES,
-			                              ms_system.line_indices.size() * 2,
-			                              GL_UNSIGNED_INT, 0));
+			
+			
 
 
 			
@@ -634,22 +615,24 @@ int main(int argc, char* argv[])
 			mesh.refreshFrame = -1;
 		}
 		if (draw_cloth) {
-			cloth_pass.updateVBO(0, ms_system.node_positions.data(), ms_system.node_positions.size());
+			glDisable(GL_CULL_FACE);
+			cloth_pass.updateVBO(0, cloth.vertices.data(), cloth.vertices.size());
+			cloth_pass.updateVBO(1, cloth.cloth_uv_coords.data(), cloth.cloth_uv_coords.size());
 			cloth_pass.setup();
-			// Draw our triangles.
-			CHECK_GL_ERROR(glDrawElements(GL_LINES,
-			                              ms_system.line_indices.size() * 2,
-			                              GL_UNSIGNED_INT, 0));
+
+			CHECK_GL_ERROR(glDrawArrays(GL_TRIANGLES,
+										0,
+		                              	cloth.vertices.size()));
 		}
 
-		if (draw_spring) {
-			spring_pass.updateVBO(0, cloth.spring_vertices.data(), cloth.spring_vertices.size());
-			spring_pass.setup();
+		if (draw_struct_spring) {
+			struct_spring_pass.updateVBO(0, cloth.struct_spring_vertices.data(), cloth.struct_spring_vertices.size());
+			struct_spring_pass.setup();
 
 			CHECK_GL_ERROR(glDrawArrays(GL_LINES,
 										0,
-		                              	cloth.spring_vertices.size()));
-		}
+		                              	cloth.struct_spring_vertices.size()));
+}
 
 		if (draw_bend_spring) {
 			bend_spring_pass.updateVBO(0, cloth.bend_spring_vertices.data(), cloth.bend_spring_vertices.size());
@@ -660,16 +643,7 @@ int main(int argc, char* argv[])
 		                              	cloth.bend_spring_vertices.size()));
 		}
 
-				if (draw_tri_cloth) {
-			glDisable(GL_CULL_FACE);
-			tri_cloth_pass.updateVBO(0, cloth.vertices.data(), cloth.vertices.size());
-			tri_cloth_pass.updateVBO(1, cloth.cloth_uv_coords.data(), cloth.cloth_uv_coords.size());
-			tri_cloth_pass.setup();
-
-			CHECK_GL_ERROR(glDrawArrays(GL_TRIANGLES,
-										0,
-		                              	cloth.vertices.size()));
-		}
+				
 		for(int i = 0; i < textures.size(); i++) {
 			// printf("reached here \n");
 			glViewport(main_view_width, main_view_height - (i + 1) * preview_height + gui.frame_shift, preview_width, preview_height);
