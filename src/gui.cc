@@ -56,7 +56,7 @@ void GUI::keyCallback(int key, int scancode, int action, int mods)
 		std::cerr << "Key: " << key << " action: " << action << std::endl;
 #endif
 	if (key == GLFW_KEY_J && action == GLFW_RELEASE) {
-	
+		toggleDrawSpring();
 	}
 
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {

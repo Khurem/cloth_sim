@@ -49,6 +49,7 @@ src/CMakeFiles/cloth.dir/main.cc.o
  /home/khurem/Programming Projects/massspring/src/shaders/bone.frag
  /home/khurem/Programming Projects/massspring/src/shaders/bone.vert
  /home/khurem/Programming Projects/massspring/src/shaders/cloth.frag
+ /home/khurem/Programming Projects/massspring/src/shaders/cloth.geom
  /home/khurem/Programming Projects/massspring/src/shaders/cloth.vert
  /home/khurem/Programming Projects/massspring/src/shaders/cylinder.frag
  /home/khurem/Programming Projects/massspring/src/shaders/cylinder.vert

@@ -117,6 +117,10 @@ const char* bend_spring_fragment_shader =
 #include "shaders/bend_spring.frag"
 ;
 
+const char* cloth_geom_shader =
+#include "shaders/cloth.geom"
+;
+
 
 
 void ErrorCallback(int error, const char* description) {
@@ -164,8 +168,8 @@ int main(int argc, char* argv[])
 	std::vector<glm::vec4> floor_vertices;
 	std::vector<glm::uvec3> floor_faces;
 	create_floor(floor_vertices, floor_faces);
-	int cloth_x_size = 11;
-	int cloth_z_size = 11;
+	int cloth_x_size = 21;
+	int cloth_z_size = 21;
 	Cloth cloth(cloth_x_size, cloth_z_size);
 	gui.assignCloth(&cloth);
 	TicTocTimer *timer = new TicTocTimer;
@@ -216,7 +220,7 @@ int main(int argc, char* argv[])
 	 * GUI object needs the mesh object for bone manipulation.
 	 */
 	gui.assignMesh(&mesh);
-
+	//glm::vec4 light_position = glm::vec4(10.0f, 2000.0f, -3000.0f, 1.0f);
 	glm::vec4 light_position = glm::vec4(0.0f, 100.0f, 0.0f, 1.0f);
 	MatrixPointers mats; // Define MatrixPointers here for lambda to capture
 
@@ -457,16 +461,16 @@ int main(int argc, char* argv[])
 	RenderDataInput cloth_pass_input;
 	cloth_pass_input.assign(0, "vertex_position", cloth.vertices.data(), cloth.vertices.size(), 3, GL_FLOAT);
 	cloth_pass_input.assign(1, "uv", cloth.cloth_uv_coords.data(), cloth.cloth_uv_coords.size(), 2, GL_FLOAT);
-
+	cloth_pass_input.assign(2, "normal", cloth.vertex_normals.data(), cloth.vertex_normals.size(), 3, GL_FLOAT);
 	RenderPass cloth_pass(-1,
 			cloth_pass_input,
-			{ cloth_vertex_shader, nullptr, cloth_fragment_shader },
+			{ cloth_vertex_shader, cloth_geom_shader, cloth_fragment_shader },
 			{ std_model, std_view, std_proj, std_light },
 			{ "fragment_color" }
 			);
 
 	bool draw_floor = false;
-	bool draw_cloth = false;
+	bool draw_cloth = true;
 	bool draw_bend_spring = true;
 	bool draw_struct_spring = true;
 	float aspect = 0.0f;
@@ -618,6 +622,7 @@ int main(int argc, char* argv[])
 			glDisable(GL_CULL_FACE);
 			cloth_pass.updateVBO(0, cloth.vertices.data(), cloth.vertices.size());
 			cloth_pass.updateVBO(1, cloth.cloth_uv_coords.data(), cloth.cloth_uv_coords.size());
+			cloth_pass.updateVBO(2, cloth.vertex_normals.data(), cloth.vertex_normals.size());
 			cloth_pass.setup();
 
 			CHECK_GL_ERROR(glDrawArrays(GL_TRIANGLES,

@@ -48,6 +48,7 @@ src/CMakeFiles/cloth.dir/main.cc.o: ../src/shaders/blending.vert
 src/CMakeFiles/cloth.dir/main.cc.o: ../src/shaders/bone.frag
 src/CMakeFiles/cloth.dir/main.cc.o: ../src/shaders/bone.vert
 src/CMakeFiles/cloth.dir/main.cc.o: ../src/shaders/cloth.frag
+src/CMakeFiles/cloth.dir/main.cc.o: ../src/shaders/cloth.geom
 src/CMakeFiles/cloth.dir/main.cc.o: ../src/shaders/cloth.vert
 src/CMakeFiles/cloth.dir/main.cc.o: ../src/shaders/cylinder.frag
 src/CMakeFiles/cloth.dir/main.cc.o: ../src/shaders/cylinder.vert

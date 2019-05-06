@@ -758,7 +758,7 @@ float line_segment_distance_copy(const glm::vec3& line1_start, const glm::vec3& 
 
 Particle::Particle(glm::vec3 init_position, glm::vec3 curr_position, float mass, glm::vec2 uv_coords, int grid_x, int grid_z):
 			init_position_(init_position), position_(curr_position), mass_(mass), uv_coords_(uv_coords),
-			grid_x_(grid_x), grid_z_(grid_z), is_secondary_(false)
+			grid_x_(grid_x), grid_z_(grid_z), is_secondary_(false) , old_position_(curr_position)
 {
 	resetForce();
 	setMovable();
@@ -767,7 +767,7 @@ Particle::Particle(glm::vec3 init_position, glm::vec3 curr_position, float mass,
 
 Particle::Particle(glm::vec3 init_position, glm::vec3 curr_position, float mass, glm::vec2 uv_coords, bool is_secondary):
 			init_position_(init_position), position_(curr_position), mass_(mass), uv_coords_(uv_coords),
-			grid_x_(-1), grid_z_(-1), is_secondary_(is_secondary)
+			grid_x_(-1), grid_z_(-1), is_secondary_(is_secondary) , old_position_(curr_position)
 {
 	resetForce();
 	setMovable();
@@ -776,7 +776,7 @@ Particle::Particle(glm::vec3 init_position, glm::vec3 curr_position, float mass,
 Particle::Particle (const Particle &old_obj):
 			init_position_(old_obj.init_position_), position_(old_obj.position_), force_(old_obj.force_), velocity_(old_obj.velocity_), 
 			uv_coords_(old_obj.uv_coords_), grid_x_(old_obj.grid_x_), grid_z_(old_obj.grid_z_), mass_(old_obj.mass_), 
-			fixed_(old_obj.fixed_), is_secondary_(old_obj.is_secondary_), duplicated_(true)
+			fixed_(old_obj.fixed_), is_secondary_(old_obj.is_secondary_), duplicated_(true) , old_position_(old_obj.old_position_)
 
 {
 	setMovable();
@@ -821,6 +821,15 @@ Spring::Spring(Particle* p1, Particle* p2, float k, bool is_secondary):
 			p1_(p1), p2_(p2), k_(k), is_secondary_(is_secondary)
 {
 	init_length_ = glm::length(p1_->position_ - p2_->position_);
+	max_length_ = (1 + max_deform_rate_) * init_length_;
+	min_length_ = (1 - max_deform_rate_) * init_length_;
+}
+
+void Spring::removeBendSpring() {
+	if(bend_spring_ != nullptr) {
+		delete bend_spring_;
+		bend_spring_ = nullptr;
+	}
 }
 
 
@@ -835,11 +844,12 @@ void Spring::computeForceQuantity() {
 	float curr_length = glm::length(p1_->position_ - p2_->position_);
 	float init_length = glm::length(p1_->init_position_ - p2_->init_position_);
 	float deform_rate = (init_length - curr_length) / init_length;
-	// float deform_rate = (init_length_ - curr_length) / init_length_;
-	if(fabs(deform_rate) > max_deform_rate_) {	// constrains. Anti-superelastic.
-		deform_rate = deform_rate * (fabs(deform_rate) / max_deform_rate_);
-	}
-	force_quantity_ = deform_rate * k_;
+	force_quantity_ = deform_rate * k_ * init_length_;
+	// // float deform_rate = (init_length_ - curr_length) / init_length_;
+	// if(fabs(deform_rate) > max_deform_rate_) {	// constrains. Anti-superelastic.
+	// 	deform_rate = deform_rate * (fabs(deform_rate) / max_deform_rate_);
+	// }
+	// force_quantity_ = deform_rate * k_;
 
 }
 
@@ -872,16 +882,44 @@ void Spring::replaceParticle(Particle* p_old, Particle* p_new) {
 	}
 }
 
+void Cloth::resetCloth() {
+	for(Particle* p : particles_) {
+		p->position_ = p->init_position_;
+		p->velocity_ = glm::vec3(0.0);
+	}
+	setInitAnchorNodes();
+}
+
+void Cloth::setInitAnchorNodes() {
+
+	particles_[getParticleIdx(0, 0)]->setFixed();								//(0, 0)
+	particles_[getParticleIdx(0, z_size_ - 1)]->setFixed();						//(0, 1)
+	particles_[getParticleIdx(x_size_ - 1, 0)]->setFixed();						//(1, 0)
+particles_[getParticleIdx(x_size_ - 1, z_size_ - 1)]->setFixed(); //(1, 1)
+	// particles_[getParticleIdx(0, 0)]->setFixed();
+	// // particles_[getParticleIdx(0, z_size_ - 1)]->setFixed();
+	// particles_[getParticleIdx(x_size_ - 1, 0)]->setFixed();
+	// particles_[getParticleIdx(x_size_ - 1, z_size_ - 1)]->setFixed();
+
+	// particles_[getParticleIdx(x_size_ / 2 - 1, 0)]->setFixed();
+	// particles_[getParticleIdx(x_size_ / 2 - 1, z_size_ - 1)]->setFixed();
+	// for(int x = 0; x < x_size_; x++) {
+	// 	particles_[getParticleIdx(x, 0)]->setFixed();
+	// }
+}
+
 Cloth::Cloth(int x_size, int z_size):
 		x_size_(x_size), z_size_(z_size)
 {
 	// build grid
+	float total_x_width = (x_size_ - 1) * grid_width_, total_z_width = (z_size_ - 1 + 0.5) * grid_width_;
 	for(int x = 0; x < x_size_; x++) {
 		float z_offset = (x % 2 == 0)? 0.0 : (0.5 * grid_width_);
 		for(int z = 0; z < z_size_; z++) {
-			glm::vec3 position(x * grid_width_, init_height_, z * grid_width_ + z_offset);
-			glm::vec2 uv_coords(1.0 * x / (x_size_ - 1), 1.0 * z / (z_size_ - 1));
-			// std::cout << "uv = " << glm::to_string(uv_coords) << std::endl;
+			float pos_x = x * grid_width_, pos_z = z * grid_width_ + z_offset;
+			glm::vec3 position(pos_x, init_height_, pos_z);
+			glm::vec2 uv_coords(pos_x / total_x_width, pos_z / total_z_width);
+			std::cout << "uv = " << glm::to_string(uv_coords) << std::endl;
 			Particle* particle = new Particle(position, position, particle_mass_, uv_coords, x, z);
 			particles_.push_back(particle);
 			// std::cout << "particles " << glm::to_string(particle->position_) << std::endl;
@@ -890,10 +928,7 @@ Cloth::Cloth(int x_size, int z_size):
 	// std::cout << "cloth built, particle number: " << particles_.size() << std::endl;
 
 	// set two anchor nodes. For experiments.
-	particles_[getParticleIdx(0, 0)]->setFixed();
-	particles_[getParticleIdx(0, z_size_ - 1)]->setFixed();
-	particles_[getParticleIdx(x_size_ - 1, 0)]->setFixed();
-	particles_[getParticleIdx(x_size_ - 1, z_size_ - 1)]->setFixed();
+	setInitAnchorNodes();
 
 	// create triangles
 	for(int x = 0; x < x_size_; x++) {
@@ -1088,6 +1123,9 @@ void Cloth::tear(Spring* s) {
 
 		getStructSpring(p1, nb_p1)->replaceTriangle(t1, tt1);
 		getStructSpring(p2, nb_p1)->replaceTriangle(t1, tt2);
+		for(Spring* nb_p1_s : nb_p1->springs_) {
+			nb_p1_s->removeBendSpring();
+		}
 		triangles_.erase(t1);
 		delete t1;
 	}
@@ -1109,6 +1147,9 @@ void Cloth::tear(Spring* s) {
 		
 		getStructSpring(p1, nb_p2)->replaceTriangle(t2, tt1);
 		getStructSpring(p2, nb_p2)->replaceTriangle(t2, tt2);
+		for(Spring* nb_p2_s : nb_p2->springs_) {
+			nb_p2_s->removeBendSpring();
+		}
 		triangles_.erase(t2);
 		delete t2;
 
@@ -1132,11 +1173,13 @@ void Cloth::refreshCache() {
 	// vertices and uv_coords
 	vertices.clear();
 	cloth_uv_coords.clear();
+	vertex_normals.clear();
 	for(Triangle* triangle : triangles_) {
 		for(Particle* p : triangle->particles_) {
 			// std::cout << "particle pushed to cache: " << glm::to_string(p->position_) << std::endl;
 			vertices.push_back(p->position_);
 			cloth_uv_coords.push_back(p->uv_coords_);
+			vertex_normals.push_back(p->vertex_normal_);
 		}
 	}
 
@@ -1183,7 +1226,7 @@ void Cloth::animate(float delta_t) {
 		// TODO: if force quantity exceeds limit, break the spring
 		struct_s->applyForce();
 		if(struct_s->force_quantity_ == 0.0f) {
-			std::cout << "spring force quantity zero" << std::endl;
+			// std::cout << "spring force quantity zero" << std::endl;
 		}
 
 		if(struct_s->bend_spring_) {
@@ -1199,12 +1242,45 @@ void Cloth::animate(float delta_t) {
 		if(!particle->fixed_) {
 			glm::vec3 damper_force = -damper_ * particle->velocity_;
 			glm::vec3 acceleration = (particle->force_ + damper_force) / particle->mass_;
-			particle->velocity_ += acceleration * delta_t;
+			particle->velocity_ += acceleration * delta_t * 0.5f;
 			particle->position_ += particle->velocity_ * delta_t;
 
 		}
 	}
 
+	std::queue<Particle*> start_particles;
+	for(Particle* p : particles_) {
+		if(p->fixed_) {
+			start_particles.emplace(p);
+		}
+	}
+	bfsConstrain(start_particles);	
+	for(Particle* p : particles_) {
+		if(!(*p->springs_.begin())->constrained_) {
+			start_particles = std::queue<Particle*>();
+			start_particles.emplace(p);
+			bfsConstrain(start_particles);
+		}
+	}
+
+	// particle positions determined. Compute vertex normals.
+	for(Particle* p : particles_) {
+		p->face_normals_.clear();
+	}
+	for(Triangle* t : triangles_) {
+		t->face_normal_ = glm::normalize(glm::cross(t->particles_[1]->position_ - t->particles_[0]->position_, 
+														t->particles_[2]->position_ - t->particles_[0]->position_));
+		for(Particle* p : t->particles_) {
+			p->face_normals_.push_back(t->face_normal_);
+		}
+	}
+	for(Particle* p : particles_) {
+		glm::vec3 normal_accumulate(0.0f, 0.0f, 0.0f);
+		for(glm::vec3& face_normal : p->face_normals_) {
+			normal_accumulate += face_normal;
+		}
+		p->vertex_normal_ = normal_accumulate / (1.0f * p->face_normals_.size());
+	}
 	setCurrentSpring();
 	// std::cout << "pick ray start: " << glm::to_string(pick_ray_start) << std::endl;
 	if(picked_spring) {
@@ -1213,11 +1289,39 @@ void Cloth::animate(float delta_t) {
 		}
 	}
 	refreshCache();
+	time_ += delta_t;
 	// std::cout << std::endl;
 }
 
+void Cloth::bfsConstrain(std::queue<Particle*>& q) {
+	// std::queue<Particle*> q;
+	// q.emplace(p_start);
+	while(!q.empty()) {
+		Particle* p = q.front();
+		q.pop();
+		for(Spring* s : p->springs_) {
+			if(s->constrained_) {
+				continue;
+			}
+			Particle* nb_p = s->p1_ == p ? s->p2_ : s->p1_;
+			float len = glm::length(p->position_ - nb_p->position_);
+			if(len > s->max_length_) {
+				nb_p->position_ = p->position_ + glm::normalize(nb_p->position_ - p->position_) * s->max_length_;
+			}
+			s->constrained_ = true;
+			q.emplace(nb_p);
+
+		}
+
+	}
+
+}
+
+
+
 void Cloth::groupNeighbors(Particle* p, std::map<int, std::unordered_set<Particle*>>& groups) {
 	std::vector<Particle*> nb_particles;
+	std::vector<Spring*> nb_springs;
 	for(Spring* s : p->springs_) {
 		if(s->p1_ == nullptr || s->p2_ == nullptr) {
 			std::cout << "spring has null node" << std::endl;
@@ -1254,6 +1358,7 @@ void Cloth::groupNeighbors(Particle* p, std::map<int, std::unordered_set<Particl
 			if(containsStructSpring(p1, p2)) {
 				// std::cout << "spring " << i << " connected to spring " << j << std::endl;
 				uf[findRoot(uf, j)] = findRoot(uf, i);
+				nb_springs.push_back(getStructSpring(p1, p2));
 			}
 		}
 	}
@@ -1275,6 +1380,11 @@ void Cloth::groupNeighbors(Particle* p, std::map<int, std::unordered_set<Particl
 			throw("neighbor spring grouped doesn't exist");
 		}
 		
+	}
+	if(groups.size() > 1) {
+		for(Spring* nb_s : nb_springs) {
+			nb_s->removeBendSpring();
+		}
 	}
 }
 
@@ -1380,11 +1490,6 @@ void Cloth::removeStructSpring(Spring* s) {
 	spring_map_[s->p2_][s->p1_] = nullptr;
 	delete s;
 }
-
-
-
-
-
 
 
 
