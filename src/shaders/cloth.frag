@@ -36,7 +36,7 @@ void main() {
 	
 	vec3 texcolor = texture(sampler, uv_coords).xyz;
 	// float dot_nl = dot(normalize(light_direction), normalize(face_normal));
-	float dot_nl = dot(normalize(light_direction), normalize(vec4(vertex_normal, 0.0)));
+	float dot_nl = abs(dot(normalize(light_direction), normalize(vec4(vertex_normal, 0.0))));
 
 	dot_nl = clamp(dot_nl + 0.4f, 0.0, 1.0);
 	vec3 color = clamp(dot_nl * texcolor, 0.0, 1.0);

@@ -7,7 +7,7 @@
 #include <GLFW/glfw3.h>
 #include "cxxtimer.hpp"
 
-#define PICK_RAY_LEN 1000.0f
+#define PICK_RAY_LEN 200.0f
 
 struct Mesh;
 
@@ -46,8 +46,9 @@ float time_speed_ = 1.0;
 	static void MousePosCallback(GLFWwindow* window, double mouse_x, double mouse_y);
 	static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 	static void MouseScrollCallback(GLFWwindow* window, double dx, double dy);
-	float ine_segment_distance(const glm::vec3& line1_start, const glm::vec3& line1_end, 
+	float line_segment_distance(const glm::vec3& line1_start, const glm::vec3& line1_end, 
 							const glm::vec3& line2_start, const glm::vec3& line2_end);
+	
 	// float angle_between_two_directs_2D(glm::vec2 direct1, glm::vec2 direct2);
 	
 	glm::vec3 getCenter() const { return center_; }
@@ -77,6 +78,7 @@ private:
 	MassSpringSystem* ms_system_;
 	bool reset_ms_system_ = false;
 	bool drag_state_ = false;
+	bool control_pressed_ = false;
 	bool fps_mode_ = false;
 	bool pose_changed_ = true;
 	bool transparent_ = false;

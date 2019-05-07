@@ -3,6 +3,8 @@
 #include <jpegio.h>
 #include <iostream>
 #include <algorithm>
+#include <math.h>
+#include <glm/gtx/string_cast.hpp>
 #include <debuggl.h>
 #include <glm/gtc/matrix_access.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -57,6 +59,14 @@ void GUI::keyCallback(int key, int scancode, int action, int mods)
 #endif
 	if (key == GLFW_KEY_J && action == GLFW_RELEASE) {
 		toggleDrawSpring();
+	}
+	if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL) {
+		if(action == GLFW_PRESS) {
+			control_pressed_ = true;
+		}
+		else {
+			control_pressed_ = false;
+		}
 	}
 
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
@@ -239,6 +249,10 @@ float line_segment_distance(const glm::vec3& line1_start, const glm::vec3& line1
 
 }
 
+
+
+
+
 // float GUI::angle_between_two_directs_2D(glm::vec2 direct1, glm::vec2 direct2) {
 // 	direct1 = glm::normalize(direct1);
 // 	direct2 = glm::normalize(direct2);
@@ -273,6 +287,8 @@ void GUI::mousePosCallback(double mouse_x, double mouse_y)
 	glm::vec2 mouse_delta = mouse_end - mouse_start;
 
 	bool drag_camera = drag_state_ && current_button_ == GLFW_MOUSE_BUTTON_RIGHT;
+	bool tear_particle = (!control_pressed_) && drag_state_ && current_button_ == GLFW_MOUSE_BUTTON_LEFT;
+	bool drag_particle = control_pressed_ && drag_state_ && current_button_ == GLFW_MOUSE_BUTTON_LEFT;
 	bool drag_bone = drag_state_ && current_button_ == GLFW_MOUSE_BUTTON_LEFT;
 
 	bool drag_scroll = scrolling && current_button_ == GLFW_MOUSE_BUTTON_LEFT;
@@ -384,15 +400,36 @@ if (mouse_x > view_width_)
 		cloth_->pick_ray_end = pick_ray_end;
 	}
 
-	if(drag_state_ && current_button_ == GLFW_MOUSE_BUTTON_LEFT) {
+	if(tear_particle) {
 		cloth_->to_tear = true;
 	}
 	else {
 		cloth_->to_tear = false;
 	}
 
+	if(drag_particle) {
+		glm::vec3 mouse_pos = glm::unProject(glm::vec3(current_x_, current_y_, 1.0f),
+											view_matrix_,
+											projection_matrix_,
+											viewport);
+		glm::vec3 last_mouse_pos_ = glm::unProject(glm::vec3(last_x_, last_y_, 1.0f),
+											view_matrix_,
+											projection_matrix_,
+											viewport);	
+
+		glm::vec3 darg_dist = mouse_pos - last_mouse_pos_;
+		Particle* p = cloth_->getCurrentParticle();
+		if(p) {
+			p->move(darg_dist);
+		}
+	}
+
 	
 	
+}
+
+void dragParticle() {
+
 }
 
 void GUI::mouseButtonCallback(int button, int action, int mods)

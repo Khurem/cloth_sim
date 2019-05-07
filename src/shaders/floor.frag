@@ -16,4 +16,4 @@ void main() {
 	color = clamp(dot_nl * color, 0.0, 1.0);
 	fragment_color = vec4(color, 1.0);
 }
-)zzz"
+)zzz" 

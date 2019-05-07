@@ -680,6 +680,19 @@ void MassSpringSystem::randomDisturb() {	// update system states and refresh cac
 	// refreshCache();
 }
 
+float line_point_distance(glm::vec3& line_start, glm::vec3& line_end, glm::vec3& point) {
+    // std::cout << "start: " << glm::to_string(line_start) << ", end: " << glm::to_string(line_end) << std::endl;
+    glm::vec3 sp = point - line_start;
+    glm::vec3 se = line_end - line_start;
+    float prj_len = glm::dot(glm::normalize(sp), glm::normalize(se)) * glm::length(sp);
+    float sp_len = glm::length(sp);
+
+    // std::cout << "len1: " << prj_len << ", len2: " << sp_len << std::endl;
+
+    float res = sqrt(sp_len * sp_len - prj_len * prj_len);
+    // std::cout << "line point distance: " << res << std::endl;
+    return res;
+}
 
 float line_segment_distance_copy(const glm::vec3& line1_start, const glm::vec3& line1_end, 
 							const glm::vec3& line2_start, const glm::vec3& line2_end)
@@ -784,6 +797,10 @@ Particle::Particle (const Particle &old_obj):
 
 Particle::~Particle() {
 
+}
+
+void Particle::move(glm::vec3 dist) {
+	position_ += dist;
 }
 
 void Particle::resetForce() {
@@ -893,9 +910,9 @@ void Cloth::resetCloth() {
 void Cloth::setInitAnchorNodes() {
 
 	particles_[getParticleIdx(0, 0)]->setFixed();								//(0, 0)
-	particles_[getParticleIdx(0, z_size_ - 1)]->setFixed();						//(0, 1)
+	// particles_[getParticleIdx(0, z_size_ - 1)]->setFixed();						//(0, 1)
 	particles_[getParticleIdx(x_size_ - 1, 0)]->setFixed();						//(1, 0)
-particles_[getParticleIdx(x_size_ - 1, z_size_ - 1)]->setFixed(); //(1, 1)
+	// particles_[getParticleIdx(x_size_ - 1, z_size_ - 1)]->setFixed(); //(1, 1)
 	// particles_[getParticleIdx(0, 0)]->setFixed();
 	// // particles_[getParticleIdx(0, z_size_ - 1)]->setFixed();
 	// particles_[getParticleIdx(x_size_ - 1, 0)]->setFixed();
@@ -1070,6 +1087,18 @@ Cloth::Cloth(int x_size, int z_size):
 
 Cloth::~Cloth() {
 
+}
+
+void Cloth::collisionWithFloor(){
+	for(Particle* p : particles_) {
+		if(p->position_.y < kFloorY){
+			// std::cout << "FLOOR HIT ME\n";
+			p->position_.y = kFloorY + kFloorEps;
+			p->setFixed();
+			// p->velocity_ = glm::vec3(0.0f);
+			// p->force_ = glm::vec3(0.0f);
+		}
+	}
 }
 
 void Cloth::tear(Spring* s) {
@@ -1263,6 +1292,7 @@ void Cloth::animate(float delta_t) {
 		}
 	}
 
+	collisionWithFloor();
 	// particle positions determined. Compute vertex normals.
 	for(Particle* p : particles_) {
 		p->face_normals_.clear();
@@ -1281,11 +1311,12 @@ void Cloth::animate(float delta_t) {
 		}
 		p->vertex_normal_ = normal_accumulate / (1.0f * p->face_normals_.size());
 	}
+	setCurrentParticle();
 	setCurrentSpring();
 	// std::cout << "pick ray start: " << glm::to_string(pick_ray_start) << std::endl;
-	if(picked_spring) {
-		if(to_tear && !picked_spring->is_secondary_) {
-			tear(picked_spring);
+	if(picked_spring_) {
+		if(to_tear && !picked_spring_->is_secondary_) {
+			tear(picked_spring_);
 		}
 	}
 	refreshCache();
@@ -1437,15 +1468,28 @@ void Cloth::duplicateParticles(Particle* p, std::map<int, std::unordered_set<Par
 
 
 void Cloth::setCurrentSpring() {
-	picked_spring = nullptr;
+	picked_spring_ = nullptr;
 	float min_distance = std::numeric_limits<float>::max();
 	for(Spring* s : springs_) {	// iterate all springs, and find the one with min distance
 		float curr_distance = line_segment_distance_copy(pick_ray_start, pick_ray_end, s->p1_->position_, s->p2_->position_);
 		if(curr_distance < SPRING_CYLINDER_RADIUS && curr_distance < min_distance) {
 			min_distance = curr_distance;
-			picked_spring = s;
+			picked_spring_ = s;
 		}
 	}
+}
+
+void Cloth::setCurrentParticle() {
+	picked_particle_ = nullptr;
+	float min_distance = std::numeric_limits<float>::max();
+	for(Particle* p : particles_) {
+		float curr_distance = line_point_distance(pick_ray_start, pick_ray_end, p->position_);
+		if((curr_distance < PARTICLE_RADIUS) && (curr_distance < min_distance)) {
+			min_distance = curr_distance;
+			picked_particle_ = p;
+		}
+	}
+	// std::cout << "particle min distance: " << min_distance << std::endl;
 }
 
 

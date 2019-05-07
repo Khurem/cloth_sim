@@ -224,10 +224,10 @@ private:
 };
 
 
-#define G (4*9.8)
+#define G (1*9.8)
 #define PI 3.1416
-#define SPRING_CYLINDER_RADIUS 0.5f
-
+#define SPRING_CYLINDER_RADIUS 0.1f
+#define PARTICLE_RADIUS 0.5f
 
 
 struct Spring;
@@ -244,6 +244,7 @@ struct Particle {
 	void addForce(glm::vec3 f);
 	void setFixed();
 	void setMovable();
+	void move(glm::vec3 dist);
 	void resetNormals();
 	glm::vec3 position_;
 	glm::vec3 init_position_;
@@ -305,6 +306,7 @@ public:
 	Cloth(int x_size, int z_size);
 	~Cloth();
 	void animate(float delta_t);	// recalculate the forces, velocities and positions. Finally update cache
+	Particle* getCurrentParticle() {return picked_particle_;}
 	void resetCloth();
 	// void bfsConstrain(std::queue<Particle*>& q);
 
@@ -326,6 +328,7 @@ private:
 	void refreshCache();	// update the cache for rendiering
 	void setInitAnchorNodes();
 	void tear(Spring* s);
+	void collisionWithFloor();
 	Particle* getNeighborParticle(Triangle* t1, Spring* s);
 	bool containsStructSpring(Particle* p1, Particle* p2);
 	Spring* addStructSpring(Particle* p1, Particle* p2, float k, bool is_secondary);
@@ -333,7 +336,7 @@ private:
 	void removeStructSpring(Spring* s);
 
 	void setCurrentSpring();
-
+	void setCurrentParticle();
 	void groupNeighbors(Particle* p, std::map<int, std::unordered_set<Particle*>>& groups);
 	void duplicateParticles(Particle* p, std::map<int, std::unordered_set<Particle*>>& groups, std::vector<Particle*>& new_particles);
 	
@@ -346,7 +349,8 @@ private:
 	std::unordered_set<Spring*> springs_;		//stored in a hashset for constant time access, modify and delete
 	std::map<Particle*, std::map<Particle*, Spring*>> spring_map_; // key: particle pairs. Value: springs.
 
-	Spring* picked_spring = nullptr;
+	Spring* picked_spring_ = nullptr;
+	Particle* picked_particle_ = nullptr;
 	int x_size_, z_size_;
 	float time_ = 0.0f;
 	const float grid_width_ = 1.0;
@@ -354,7 +358,7 @@ private:
 	const float bend_sheer_k_ = 20.0;		// spring constant of bending springs. (there bending springs also used as sheering springs)
 	const float damper_ = 0.30;
 	const float particle_mass_ = 0.1;	// init mass of every particle.
-	const float init_height_ = 0.0;		// init height of the cloth. (i.e. init z position of all particles)
+	const float init_height_ = 20.0;		// init height of the cloth. .e. init z position of all particles)
 
 };
 

@@ -220,8 +220,8 @@ int main(int argc, char* argv[])
 	 * GUI object needs the mesh object for bone manipulation.
 	 */
 	gui.assignMesh(&mesh);
-	//glm::vec4 light_position = glm::vec4(10.0f, 2000.0f, -3000.0f, 1.0f);
-	glm::vec4 light_position = glm::vec4(0.0f, 100.0f, 0.0f, 1.0f);
+	glm::vec4 light_position = glm::vec4(10.0f, 2000.0f, 3000.0f, 1.0f);
+	//glm::vec4 light_position = glm::vec4(0.0f, 100.0f, 0.0f, 1.0f);
 	MatrixPointers mats; // Define MatrixPointers here for lambda to capture
 
 	/*
@@ -469,7 +469,7 @@ int main(int argc, char* argv[])
 			{ "fragment_color" }
 			);
 
-	bool draw_floor = false;
+	bool draw_floor = true;
 	bool draw_cloth = true;
 	bool draw_bend_spring = true;
 	bool draw_struct_spring = true;
