@@ -36,6 +36,7 @@ GUI::GUI(GLFWwindow* window, int view_width, int view_height, int preview_height
 	}
 	float aspect_ = static_cast<float>(view_width_) / view_height_;
 	projection_matrix_ = glm::perspective((float)(kFov * (M_PI / 180.0f)), aspect_, kNear, kFar);
+	// printf("%f %f %f\n INITIAL", center_[0], center_[1], center_[2]);
 	// timer_ = tic();
 }
 
@@ -46,7 +47,7 @@ GUI::~GUI()
 void GUI::assignMesh(Mesh* mesh)
 {
 	mesh_ = mesh;
-	center_ = mesh_->getCenter();
+	// center_ = mesh_->getCenter();
 }
 
 
@@ -483,11 +484,12 @@ void GUI::mouseScrollCallback(double dx, double dy)
 void GUI::updateMatrices()
 {
 	// Compute our view, and projection matrices.
+	
 	if (fps_mode_)
 		center_ = eye_ + camera_distance_ * look_;
 	else
 		eye_ = center_ - camera_distance_ * look_;
-
+	// printf("%f %f %f\n", eye_[0], eye_[1], eye_[2]);
 	view_matrix_ = glm::lookAt(eye_, center_, up_);
 	light_position_ = glm::vec4(eye_, 1.0f);
 

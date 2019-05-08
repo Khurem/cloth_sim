@@ -873,8 +873,9 @@ void Spring::computeForceQuantity() {
 void Spring::applyForce() {
 	glm::vec3 force1 = glm::normalize(p1_->position_ - p2_->position_) * force_quantity_;
 	glm::vec3 force2 = -1.0f * force1;
-	p1_->addForce(force1);
-	p2_->addForce(force2);
+	p1_->force_ += force1;
+	p2_->force_ += force2;
+	
 }
 
 void Spring::replaceTriangle(Triangle* t_old, Triangle* t_new) {
@@ -893,10 +894,7 @@ void Spring::replaceParticle(Particle* p_old, Particle* p_new) {
 	else if(p2_ == p_old) {
 		p2_ = p_new;
 	}
-	else {
-		std::cout << "the particle you want to replace in the spring doesn't exist" << std::endl;
-		throw("the particle you want to replace in the spring doesn't exist");
-	}
+	
 }
 
 void Cloth::resetCloth() {
@@ -912,37 +910,25 @@ void Cloth::setInitAnchorNodes() {
 	particles_[getParticleIdx(0, 0)]->setFixed();								//(0, 0)
 	// particles_[getParticleIdx(0, z_size_ - 1)]->setFixed();						//(0, 1)
 	particles_[getParticleIdx(x_size_ - 1, 0)]->setFixed();						//(1, 0)
-	// particles_[getParticleIdx(x_size_ - 1, z_size_ - 1)]->setFixed(); //(1, 1)
-	// particles_[getParticleIdx(0, 0)]->setFixed();
-	// // particles_[getParticleIdx(0, z_size_ - 1)]->setFixed();
-	// particles_[getParticleIdx(x_size_ - 1, 0)]->setFixed();
-	// particles_[getParticleIdx(x_size_ - 1, z_size_ - 1)]->setFixed();
-
-	// particles_[getParticleIdx(x_size_ / 2 - 1, 0)]->setFixed();
-	// particles_[getParticleIdx(x_size_ / 2 - 1, z_size_ - 1)]->setFixed();
-	// for(int x = 0; x < x_size_; x++) {
-	// 	particles_[getParticleIdx(x, 0)]->setFixed();
-	// }
+	
 }
 
 Cloth::Cloth(int x_size, int z_size):
 		x_size_(x_size), z_size_(z_size)
 {
 	// build grid
-	float total_x_width = (x_size_ - 1) * grid_width_, total_z_width = (z_size_ - 1 + 0.5) * grid_width_;
+	float total_x_width = (x_size_ - 1) * grid_width_;
+	float total_z_width = (z_size_ - 1 ) * grid_width_;
 	for(int x = 0; x < x_size_; x++) {
 		float z_offset = (x % 2 == 0)? 0.0 : (0.5 * grid_width_);
 		for(int z = 0; z < z_size_; z++) {
 			float pos_x = x * grid_width_, pos_z = z * grid_width_ + z_offset;
 			glm::vec3 position(pos_x, init_height_, pos_z);
 			glm::vec2 uv_coords(pos_x / total_x_width, pos_z / total_z_width);
-			std::cout << "uv = " << glm::to_string(uv_coords) << std::endl;
 			Particle* particle = new Particle(position, position, particle_mass_, uv_coords, x, z);
 			particles_.push_back(particle);
-			// std::cout << "particles " << glm::to_string(particle->position_) << std::endl;
 		}
 	}
-	// std::cout << "cloth built, particle number: " << particles_.size() << std::endl;
 
 	// set two anchor nodes. For experiments.
 	setInitAnchorNodes();
@@ -950,17 +936,18 @@ Cloth::Cloth(int x_size, int z_size):
 	// create triangles
 	for(int x = 0; x < x_size_; x++) {
 		for(int z = 0; z < z_size_; z++) {
+			Triangle* triangle = new Triangle();
 			if(x % 2 == 0) {
-
+				
 				if(gridCoordValid(x, z + 1) && gridCoordValid(x + 1, z)) {
-					Triangle* triangle = new Triangle();
+					
 					triangle->particles_.push_back(particles_[getParticleIdx(x, z)]);
 					triangle->particles_.push_back(particles_[getParticleIdx(x, z + 1)]);
 					triangle->particles_.push_back(particles_[getParticleIdx(x + 1, z)]);
 					triangles_.insert(triangle);
 				}
 				if(gridCoordValid(x, z + 1) && gridCoordValid(x - 1, z)) {
-					Triangle* triangle = new Triangle();
+					
 					triangle->particles_.push_back(particles_[getParticleIdx(x, z)]);
 					triangle->particles_.push_back(particles_[getParticleIdx(x - 1, z)]);
 					triangle->particles_.push_back(particles_[getParticleIdx(x, z + 1)]);
@@ -969,7 +956,7 @@ Cloth::Cloth(int x_size, int z_size):
 			}
 			else {
 				if(gridCoordValid(x - 1, z + 1) && gridCoordValid(x, z + 1)) {
-					Triangle* triangle = new Triangle();
+					
 					triangle->particles_.push_back(particles_[getParticleIdx(x, z)]);
 					triangle->particles_.push_back(particles_[getParticleIdx(x - 1, z + 1)]);
 					triangle->particles_.push_back(particles_[getParticleIdx(x, z + 1)]);
@@ -977,7 +964,7 @@ Cloth::Cloth(int x_size, int z_size):
 				}
 
 				if(gridCoordValid(x + 1, z + 1) && gridCoordValid(x, z + 1)) {
-					Triangle* triangle = new Triangle();
+					
 					triangle->particles_.push_back(particles_[getParticleIdx(x, z)]);
 					triangle->particles_.push_back(particles_[getParticleIdx(x, z + 1)]);
 					triangle->particles_.push_back(particles_[getParticleIdx(x + 1, z + 1)]);
@@ -1075,9 +1062,7 @@ Cloth::Cloth(int x_size, int z_size):
 
 	}
 
-	for(Particle* p : particles_) {
-		std::cout << "particle spring number: " << p->springs_.size() << std::endl;
-	}
+	
 
 	// update cache vertices
 	refreshCache();
@@ -1103,8 +1088,6 @@ void Cloth::collisionWithFloor(){
 
 void Cloth::tear(Spring* s) {
 	Particle *p1 = s->p1_, *p2 = s->p2_;	// particles of current springs.
-	std::cout << "to remove spring at " << glm::to_string(glm::vec2(p1->grid_x_, p1->grid_z_)) 
-				<< ", " << glm::to_string(glm::vec2(p2->grid_x_, p2->grid_z_)) << std::endl;
 
 	Triangle *t1 = nullptr, *t2 = nullptr;	// neighboring triangles. (if any)
 	if(s->triangles_.size() >= 1) {
@@ -1192,8 +1175,6 @@ Particle* Cloth::getNeighborParticle(Triangle* t1, Spring* s) {
 			return p;
 		}
 	}
-	std::cout << "get neighbor particle function correctly!" << std::endl;
-	throw("get neighbor particle function correctly!");
 	return nullptr;
 }
 
@@ -1354,15 +1335,8 @@ void Cloth::groupNeighbors(Particle* p, std::map<int, std::unordered_set<Particl
 	std::vector<Particle*> nb_particles;
 	std::vector<Spring*> nb_springs;
 	for(Spring* s : p->springs_) {
-		if(s->p1_ == nullptr || s->p2_ == nullptr) {
-			std::cout << "spring has null node" << std::endl;
-			throw "spring has null node";
-
-		}
-		if(!containsStructSpring(s->p1_, s->p2_)) {
-			std::cout << "spring not recorded in map!" << std::endl;
-			throw("spring not recorded in map!");
-		}
+		
+		
 		Particle* nb_particle = nullptr;
 		if(s->p1_ == p) {
 			nb_particle = s->p2_;
@@ -1370,10 +1344,7 @@ void Cloth::groupNeighbors(Particle* p, std::map<int, std::unordered_set<Particl
 		else if(s->p2_ == p) {
 			nb_particle = s->p1_;
 		}
-		else {
-			std::cout << "spring doesn't belong to current particle" << std::endl;
-			throw("spring doesn't belong to current particle");
-		}
+		
 		nb_particles.push_back(nb_particle);
 	}
 	// we need union-find here!
@@ -1406,10 +1377,7 @@ void Cloth::groupNeighbors(Particle* p, std::map<int, std::unordered_set<Particl
 			int group_num = findRoot(uf, i);
 			groups[group_num].insert(nb_particles[i]);
 		}
-		else {
-			std::cout << "neighbor spring grouped doesn't exist" << std::endl;
-			throw("neighbor spring grouped doesn't exist");
-		}
+		
 		
 	}
 	if(groups.size() > 1) {
@@ -1453,7 +1421,6 @@ void Cloth::duplicateParticles(Particle* p, std::map<int, std::unordered_set<Par
 			for(Triangle* t : s->triangles_) {	// replace the particle in old triangles. At most two triangles
 				for(int p_idx = 0; p_idx < t->particles_.size(); p_idx++) {
 					if(t->particles_[p_idx] == p) {
-						std::cout << "triangle particle replaced by new particle" << std::endl;
 						t->particles_[p_idx] = p_copy;
 					}
 				}
@@ -1505,10 +1472,7 @@ bool Cloth::containsStructSpring(Particle* p1, Particle* p2) {
 }
 
 Spring* Cloth::addStructSpring(Particle* p1, Particle* p2, float k, bool is_secondary) {
-	if(containsStructSpring(p1, p2)) {
-		std::cout << "the sprinig you want to create already exists!" << std::endl;
-		throw("the sprinig you want to create already exists!");
-	}
+	
 	Spring* s = new Spring(p1, p2, k, is_secondary);
 	spring_map_[p1][p2] = s;
 	spring_map_[p2][p1] = s;
@@ -1519,10 +1483,7 @@ Spring* Cloth::addStructSpring(Particle* p1, Particle* p2, float k, bool is_seco
 	return s;
 }
 Spring* Cloth::getStructSpring(Particle* p1, Particle* p2) {
-	if(!containsStructSpring(p1, p2)) {
-		std::cout << "struct spring doesn't exist!" << std::endl;
-		throw("struct spring doesn't exist!");
-	}
+	
 	return spring_map_[p1][p2];
 }
 

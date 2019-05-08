@@ -630,23 +630,23 @@ int main(int argc, char* argv[])
 		                              	cloth.vertices.size()));
 		}
 
-		if (draw_struct_spring) {
-			struct_spring_pass.updateVBO(0, cloth.struct_spring_vertices.data(), cloth.struct_spring_vertices.size());
-			struct_spring_pass.setup();
+// 		if (draw_struct_spring) {
+// 			struct_spring_pass.updateVBO(0, cloth.struct_spring_vertices.data(), cloth.struct_spring_vertices.size());
+// 			struct_spring_pass.setup();
 
-			CHECK_GL_ERROR(glDrawArrays(GL_LINES,
-										0,
-		                              	cloth.struct_spring_vertices.size()));
-}
+// 			CHECK_GL_ERROR(glDrawArrays(GL_LINES,
+// 										0,
+// 		                              	cloth.struct_spring_vertices.size()));
+// }
 
-		if (draw_bend_spring) {
-			bend_spring_pass.updateVBO(0, cloth.bend_spring_vertices.data(), cloth.bend_spring_vertices.size());
-			bend_spring_pass.setup();
+		// if (draw_bend_spring) {
+		// 	bend_spring_pass.updateVBO(0, cloth.bend_spring_vertices.data(), cloth.bend_spring_vertices.size());
+		// 	bend_spring_pass.setup();
 
-			CHECK_GL_ERROR(glDrawArrays(GL_LINES,
-										0,
-		                              	cloth.bend_spring_vertices.size()));
-		}
+		// 	CHECK_GL_ERROR(glDrawArrays(GL_LINES,
+		// 								0,
+		//                               	cloth.bend_spring_vertices.size()));
+		// }
 
 				
 		for(int i = 0; i < textures.size(); i++) {

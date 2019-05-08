@@ -224,7 +224,7 @@ private:
 };
 
 
-#define G (1*9.8)
+#define G (4*9.8)
 #define PI 3.1416
 #define SPRING_CYLINDER_RADIUS 0.1f
 #define PARTICLE_RADIUS 0.5f
@@ -358,7 +358,7 @@ private:
 	const float bend_sheer_k_ = 20.0;		// spring constant of bending springs. (there bending springs also used as sheering springs)
 	const float damper_ = 0.30;
 	const float particle_mass_ = 0.1;	// init mass of every particle.
-	const float init_height_ = 20.0;		// init height of the cloth. .e. init z position of all particles)
+	const float init_height_ = 50.0;		// init height of the cloth. .e. init z position of all particles)
 
 };
 
