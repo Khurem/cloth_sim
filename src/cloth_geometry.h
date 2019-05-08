@@ -235,7 +235,7 @@ struct Triangle;
 
 // Nodes in the spring.
 struct Particle {
-	Particle(glm::vec3 init_position, glm::vec3 curr_position, float mass, glm::vec2 uv_coords, int grid_x = -1, int grid_z = -1);
+	Particle(glm::vec3 init_position, glm::vec3 curr_position, float mass, glm::vec2 uv_coords, int grid_x = -1, int grid_z = -1, bool is_secondary = false);
 	Particle(glm::vec3 init_position, glm::vec3 curr_position, float mass, glm::vec2 uv_coords, bool is_secondary);
 	Particle(const Particle& old_obj);
 	~Particle();

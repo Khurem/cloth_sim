@@ -21,7 +21,7 @@
 
 
 
-int window_width = 1280;
+int window_width = 960;
 int window_height = 720;
 int main_view_width = 960;
 int main_view_height = 720;
@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
 	std::vector<glm::vec4> floor_vertices;
 	std::vector<glm::uvec3> floor_faces;
 	create_floor(floor_vertices, floor_faces);
-	int cloth_x_size = 21;
+	int cloth_x_size = 16;
 	int cloth_z_size = 21;
 	Cloth cloth(cloth_x_size, cloth_z_size);
 	gui.assignCloth(&cloth);
@@ -580,12 +580,12 @@ int main(int argc, char* argv[])
 		                              cylinder_mesh.indices.size() * 2,
 		                              GL_UNSIGNED_INT, 0));
 		}
-			glViewport(window_width - scroll_bar_width, 0, window_width, window_height);
-			scroll_pass.setup();
-			CHECK_GL_ERROR(glDrawElements(GL_TRIANGLES,
-			                              scroll_faces.size() * 3,
-			                              GL_UNSIGNED_INT, 0));
-			glViewport(0, 0, main_view_width, main_view_height);
+			// glViewport(window_width - scroll_bar_width, 0, window_width, window_height);
+			// scroll_pass.setup();
+			// CHECK_GL_ERROR(glDrawElements(GL_TRIANGLES,
+			//                               scroll_faces.size() * 3,
+			//                               GL_UNSIGNED_INT, 0));
+			// glViewport(0, 0, main_view_width, main_view_height);
 		
 
 

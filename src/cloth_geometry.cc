@@ -475,211 +475,6 @@ Mesh::getCurrentQ() const
 	return &currentQ_;
 }
 
-SpringNode::SpringNode(int init_index, glm::vec3 init_pos, glm::vec3 curr_pos, float init_mass, bool init_fixed)
-				:index(init_index), init_position(init_pos), position(curr_pos), mass(init_mass), fixed(init_fixed)
-{
-	force = glm::vec3(0.0, -mass * G, 0.0);
-}
-
-SpringNode::~SpringNode()
-{
-
-}
-
-MassSpringSystem::MassSpringSystem(int init_x_size, int init_z_size)
-									:x_size(init_x_size), z_size(init_z_size)
-{
-	// create nodes
-	for(int x = 0; x < x_size; x++) {
-		for(int z = 0; z < z_size; z++) {
-			glm::vec3 node_pos(x * grid_width_, 10.0, z * grid_width_);
-			SpringNode* curr_node = new SpringNode(getNodeIndex(x, z), node_pos, node_pos, node_mass_, false);
-			nodes_.push_back(curr_node);
-		}
-	}
-
-	// connect nodes.
-	for(int x = 0; x < x_size; x++) {
-		for(int z = 0; z < z_size; z++) {
-			SpringNode* curr_node = nodes_[getNodeIndex(x, z)];
-			for(int delta_x = -1; delta_x <= 1; delta_x++) {
-				for(int delta_z = -1; delta_z <= 1; delta_z++) {
-					if(!isIndexValid(x + delta_x, z + delta_z) || delta_x == 0 && delta_z == 0) {
-						continue;
-					}
-					curr_node->neighbors.push_back(nodes_[getNodeIndex(x + delta_x, z + delta_z)]);
-					line_indices.push_back(glm::uvec2(getNodeIndex(x, z), getNodeIndex(x + delta_x, z + delta_z)));
-				}
-			}
-		}
-	}
-
-	// set border fixed
-	for(int x = 0; x < x_size; x++) {
-		for(int z = 0; z < z_size; z++) {
-			SpringNode* curr_node = nodes_[getNodeIndex(x, z)];
-			// if(x == 0) {
-			if(x == 0 || x == x_size - 1 || z == 0 || z == z_size - 1) {
-				nodes_[getNodeIndex(x, z)]->fixed = true;
-			}
-			std::cout << "x = " << x << ", z = " << z << ", fixed? " << nodes_[getNodeIndex(x, z)]->fixed << std::endl;
-		}
-	}
-
-
-	std::cout << "system created, T = " << T_ << std::endl;
-	
-
-	srand (time(NULL));
-	
-	refreshCache();
-
-}
-
-MassSpringSystem::~MassSpringSystem() 
-{
-	for(SpringNode* node : nodes_) {
-		delete node;
-	}
-
-}
-
-bool MassSpringSystem::isIndexValid(int x, int z) {
-	return x >= 0 && x < x_size && z >= 0 && z < z_size;
-}
-
-int MassSpringSystem::getNodeIndex(int x, int z) {
-	return x * z_size + z;
-}
-
-
-
-glm::vec3 MassSpringSystem::computeSingleForce(const SpringNode* curr_node, const SpringNode* nb_node) {
-	float dist = glm::length(curr_node->position - nb_node->position);
-	float init_dist = glm::length(curr_node->init_position - nb_node->init_position);
-	glm::vec3 force = spring_k_ * (dist - init_dist) * glm::normalize(nb_node->position - curr_node->position);
-	return force;
-}
-
-
-
-void MassSpringSystem::refreshCache() {
-	std::cout << "to refresh cache. current nodes size: " << nodes_.size()  << std::endl;
-	node_positions.resize(nodes_.size());
-	line_indices.clear();
-
-	// std::cout << "refresh cache" << std::endl;
-	for(int i = 0; i < nodes_.size(); i++) {
-		node_positions[i] = nodes_[i]->position;
-		for(SpringNode* nb_node : nodes_[i]->neighbors) {
-			// std::cout << "line index: (" << nodes_[i]->index << ", " << nb_node->index << ")" << std::endl;
-			line_indices.push_back(glm::uvec2(nodes_[i]->index, nb_node->index));
-		}
-	}
-
-
-}
-
-const glm::vec3* MassSpringSystem::collectNodePositions() {
-	return node_positions.data();
-}
-
-void MassSpringSystem::animate(float delta_t) {	// update system states and refresh cache.
-	// update force
-	for(int i = 0; i < nodes_.size(); i++) {
-		SpringNode* curr_node = nodes_[i];
-		if(curr_node->fixed) continue;	// anchor node, not movable
-		curr_node->force = glm::vec3(0.0, -curr_node->mass * G, 0.0);
-		for(int j = 0; j < curr_node->neighbors.size(); j++) {
-			SpringNode* nb_node = curr_node->neighbors[j];
-			curr_node->force += computeSingleForce(curr_node, nb_node);
-		}
-	}
-
-	// https://stackoverflow.com/32776571/c-iterate-through-an-expanding-container/32776728
-	// update velocity and position (semi-Implicit Euler)
-	std::vector<SpringNode*> teared_new_nodes; 
-	for(int i = 0; i < nodes_.size(); i++) {
-		SpringNode* curr_node = nodes_[i];
-		if(!curr_node->fixed) {
-			glm::vec3 damper_force = - damper_ * curr_node->velocity;
-			// std::cout << "damper force: " << glm::to_string(damper_force) 
-			// 	<< ", spring force: " << glm::to_string(curr_node.force) << std::endl;
-			curr_node->velocity += (curr_node->force + damper_force) / curr_node->mass * delta_t;
-			curr_node->position += curr_node->velocity * delta_t;
-		}
-		
-		// if(!curr_node->teared) {
-		// 	for(int nb_idx = 0; nb_idx < curr_node->neighbors.size(); nb_idx++) {
-		// 		SpringNode* nb_node = curr_node->neighbors[nb_idx];
-		// 		checkTear(curr_node, nb_idx, 1.5, teared_new_nodes);
-		// 	}
-		// }
-		
-	}
-	for(SpringNode* new_node : teared_new_nodes) {
-		nodes_.push_back(new_node);
-	}
-	
-	// std::cout << "before refresh cache" << std::endl;
-	refreshCache();
-	// std::cout << "done refresh cache" << std::endl;
-}
-
-void MassSpringSystem::checkTear(SpringNode* curr_node, int nb_idx, float max_deform_rate, 
-									std::vector<SpringNode*>& teared_new_nodes) {
-	SpringNode* nb_node = curr_node->neighbors[nb_idx];
-	float curr_length = glm::length(curr_node->position - nb_node->position);
-	float init_length = glm::length(curr_node->init_position - nb_node->init_position);
-	if(std::abs(curr_length) > max_deform_rate * init_length) {
-		glm::vec3 new_node_curr_pos = (curr_node->position + nb_node->position) / 2.0f;
-		glm::vec3 new_node_init_pos = (curr_node->init_position + nb_node->init_position) / 2.0f;
-
-		// SpringNode* new_node = new SpringNode(nodes_.size(), new_node_init_pos, new_node_curr_pos, curr_node->mass / 2.0, false);
-		// new_node->teared = true;
-		// std::cout << "push new node neighbor" << std::endl;
-		
-		// new_node->neighbors.push_back(curr_node);
-		// std::cout << "done push new node neighbor" << std::endl;
-	
-		// teared_new_nodes.push_back(new_node);
-		// std::cout << "done push new node" << std::endl;
-	
-		// curr_node->neighbors[nb_idx] = nodes_[nodes_.size() - 1];
-		curr_node->neighbors.erase(curr_node->neighbors.begin() + nb_idx);
-		// std::cout << "done update neighbor" << std::endl;
-
-		// curr_node->neighbors.erase(curr_node->neighbors.begin() + nb_idx);
-	}
-}
-
-void MassSpringSystem::resetSystem() {	// update system states and refresh cache.
-	// update force
-	for(int i = 0; i < nodes_.size(); i++) {
-		SpringNode* curr_node = nodes_[i];
-		if(curr_node->fixed) continue;	// anchor node, not movable
-		curr_node->position = curr_node->init_position;
-		curr_node->velocity = glm::vec3(0.0);
-		curr_node->force = glm::vec3(0.0, -curr_node->mass * G, 0.0);
-	}
-	
-	// refreshCache();
-}
-
-void MassSpringSystem::randomDisturb() {	// update system states and refresh cache.
-	int x = std::floor((double)rand() / RAND_MAX * x_size);
-	int z = std::floor((double)rand() / RAND_MAX * z_size);
-	std::cout << "random change x: " << x << ", z: " << z << std::endl;
-	SpringNode* curr_node = nodes_[getNodeIndex(x, z)];
-	if(curr_node->fixed) {
-		randomDisturb();
-		return;
-	}
-	curr_node->position += (double)rand() / RAND_MAX * grid_width_ * 5.0;
-	
-	// refreshCache();
-}
-
 float line_point_distance(glm::vec3& line_start, glm::vec3& line_end, glm::vec3& point) {
     // std::cout << "start: " << glm::to_string(line_start) << ", end: " << glm::to_string(line_end) << std::endl;
     glm::vec3 sp = point - line_start;
@@ -769,56 +564,34 @@ float line_segment_distance_copy(const glm::vec3& line1_start, const glm::vec3& 
 }
 
 
-Particle::Particle(glm::vec3 init_position, glm::vec3 curr_position, float mass, glm::vec2 uv_coords, int grid_x, int grid_z):
-			init_position_(init_position), position_(curr_position), mass_(mass), uv_coords_(uv_coords),
-			grid_x_(grid_x), grid_z_(grid_z), is_secondary_(false) , old_position_(curr_position)
+Particle::Particle(glm::vec3 init_position, glm::vec3 curr_position, float mass, glm::vec2 uv_coords, int grid_x, int grid_z, bool is_secondary)
 {
-	resetForce();
-	setMovable();
+	init_position_ = init_position;
+	position_ = curr_position;
+	mass_ = mass;
+	uv_coords_ = uv_coords;
+	grid_x_ = grid_x;
+	grid_z_ = grid_z;
+	is_secondary_ = is_secondary;
+	old_position_ = curr_position;
+	force_ =  glm::vec3(0.0f, - 1.0 * mass_ * G, 0.0f);
+	// resetForce();
+	fixed_ = false;
+	// setMovable();
 	// setFixed();
 }
 
-Particle::Particle(glm::vec3 init_position, glm::vec3 curr_position, float mass, glm::vec2 uv_coords, bool is_secondary):
-			init_position_(init_position), position_(curr_position), mass_(mass), uv_coords_(uv_coords),
-			grid_x_(-1), grid_z_(-1), is_secondary_(is_secondary) , old_position_(curr_position)
-{
-	resetForce();
-	setMovable();
-}
 
-Particle::Particle (const Particle &old_obj):
-			init_position_(old_obj.init_position_), position_(old_obj.position_), force_(old_obj.force_), velocity_(old_obj.velocity_), 
-			uv_coords_(old_obj.uv_coords_), grid_x_(old_obj.grid_x_), grid_z_(old_obj.grid_z_), mass_(old_obj.mass_), 
-			fixed_(old_obj.fixed_), is_secondary_(old_obj.is_secondary_), duplicated_(true) , old_position_(old_obj.old_position_)
-
-{
-	setMovable();
-}
-
-Particle::~Particle() {
-
-}
 
 void Particle::move(glm::vec3 dist) {
 	position_ += dist;
 }
 
-void Particle::resetForce() {
-	force_ = glm::vec3(0.0f, - 1.0 * mass_ * G, 0.0f);
-}
-
-
-void Particle::addForce(glm::vec3 f) {
-	force_ += f;
-}
 
 void Particle::setFixed() {
 	fixed_ = true;
 }
 
-void Particle::setMovable() {
-	fixed_ = false;
-}
 
 Triangle::Triangle(Particle* p1, Particle* p2, Particle* p3) {
 	particles_.push_back(p1);
@@ -902,16 +675,9 @@ void Cloth::resetCloth() {
 		p->position_ = p->init_position_;
 		p->velocity_ = glm::vec3(0.0);
 	}
-	setInitAnchorNodes();
+	// setInitAnchorNodes();
 }
 
-void Cloth::setInitAnchorNodes() {
-
-	particles_[getParticleIdx(0, 0)]->setFixed();								//(0, 0)
-	// particles_[getParticleIdx(0, z_size_ - 1)]->setFixed();						//(0, 1)
-	particles_[getParticleIdx(x_size_ - 1, 0)]->setFixed();						//(1, 0)
-	
-}
 
 Cloth::Cloth(int x_size, int z_size):
 		x_size_(x_size), z_size_(z_size)
@@ -925,14 +691,15 @@ Cloth::Cloth(int x_size, int z_size):
 			float pos_x = x * grid_width_, pos_z = z * grid_width_ + z_offset;
 			glm::vec3 position(pos_x, init_height_, pos_z);
 			glm::vec2 uv_coords(pos_x / total_x_width, pos_z / total_z_width);
-			Particle* particle = new Particle(position, position, particle_mass_, uv_coords, x, z);
+			Particle* particle = new Particle(position, position, particle_mass_, uv_coords, x, z, false);
 			particles_.push_back(particle);
 		}
 	}
 
 	// set two anchor nodes. For experiments.
-	setInitAnchorNodes();
-
+	// setInitAnchorNodes();
+	particles_[getParticleIdx(0, 0)]->setFixed();	
+	particles_[getParticleIdx(x_size_ - 1, 0)]->setFixed();	
 	// create triangles
 	for(int x = 0; x < x_size_; x++) {
 		for(int z = 0; z < z_size_; z++) {
@@ -983,11 +750,11 @@ Cloth::Cloth(int x_size, int z_size):
 			if(!containsStructSpring(p1, p2)) {
 				Spring* s = addStructSpring(p1, p2, struct_k_, false);	// problem: how find bending spring?
 				s->triangles_.push_back(triangle);
-				// std::cout << "add triangle when create spring" << std::endl;
 			}
 			else {
-				getStructSpring(p1, p2) ->triangles_.push_back(triangle);
-				// std::cout << "add triangle to existing spring" << std::endl;
+				
+				
+				this->spring_map_[p1][p2]->triangles_.push_back(triangle);
 			}
 		}
 	}
@@ -1018,18 +785,12 @@ Cloth::Cloth(int x_size, int z_size):
 			}
 			else if(p1->grid_z_ == p2->grid_z_) {
 				bend_x1 = p1->grid_x_;
-				bend_z1 = p1->grid_z_ + 1;
+				bend_z1 = p1->grid_z_ == p2->grid_z_ ? p1->grid_z_ + 1 : p1->grid_z_ - 1;
 				bend_x2 = p2->grid_x_;
-				bend_z2 = p2->grid_z_ - 1;
+				bend_z2 = p1->grid_z_ == p2->grid_z_? p2->grid_z_ - 1 : p2->grid_z_ + 1;
 				
 			}
-			else {
-				bend_x1 = p1->grid_x_;
-				bend_z1 = p1->grid_z_ - 1;
-				bend_x2 = p2->grid_x_;
-				bend_z2 = p2->grid_z_ + 1;
-				
-			}
+			
 		}
 		else {
 			if(p1->grid_x_ == p2->grid_x_) {
@@ -1074,17 +835,7 @@ Cloth::~Cloth() {
 
 }
 
-void Cloth::collisionWithFloor(){
-	for(Particle* p : particles_) {
-		if(p->position_.y < kFloorY){
-			// std::cout << "FLOOR HIT ME\n";
-			p->position_.y = kFloorY + kFloorEps;
-			p->setFixed();
-			// p->velocity_ = glm::vec3(0.0f);
-			// p->force_ = glm::vec3(0.0f);
-		}
-	}
-}
+
 
 void Cloth::tear(Spring* s) {
 	Particle *p1 = s->p1_, *p2 = s->p2_;	// particles of current springs.
@@ -1106,14 +857,14 @@ void Cloth::tear(Spring* s) {
 	glm::vec3 pp1_init_pos = init_center_position;
 	glm::vec3 pp1_curr_pos = p1->position_ + (curr_center_position - p1->position_) * 0.85f;
 	glm::vec2 pp1_uv_coords = center_uv_coords;
-	Particle* pp1 = new Particle(pp1_init_pos, pp1_curr_pos, p1->mass_ / 2.0, pp1_uv_coords, true);
+	Particle* pp1 = new Particle(pp1_init_pos, pp1_curr_pos, p1->mass_ / 2.0, pp1_uv_coords, -1, -1, true);
 	particles_.push_back(pp1);
 	Spring* ss1 = addStructSpring(p1, pp1, struct_k_, true);
 
 	glm::vec3 pp2_init_pos = init_center_position;
 	glm::vec3 pp2_curr_pos = p2->position_ + (curr_center_position - p2->position_) * 0.85f;
 	glm::vec2 pp2_uv_coords = center_uv_coords;
-	Particle* pp2 = new Particle(pp2_init_pos, pp2_curr_pos, p2->mass_ / 2.0, pp2_uv_coords, true);
+	Particle* pp2 = new Particle(pp2_init_pos, pp2_curr_pos, p2->mass_ / 2.0, pp2_uv_coords, -1, -1, true);
 	particles_.push_back(pp2);
 	Spring* ss2 = addStructSpring(p2, pp2, struct_k_, true);
 
@@ -1132,9 +883,9 @@ void Cloth::tear(Spring* s) {
 		Spring* ss12 = addStructSpring(pp2, nb_p1, struct_k_, true);
 		ss11->triangles_.push_back(tt1);
 		ss12->triangles_.push_back(tt2);
-
-		getStructSpring(p1, nb_p1)->replaceTriangle(t1, tt1);
-		getStructSpring(p2, nb_p1)->replaceTriangle(t1, tt2);
+		this->spring_map_[p1][nb_p1]->replaceTriangle(t1, tt1);
+		this->spring_map_[p2][nb_p1]->replaceTriangle(t1, tt2);
+		
 		for(Spring* nb_p1_s : nb_p1->springs_) {
 			nb_p1_s->removeBendSpring();
 		}
@@ -1156,9 +907,8 @@ void Cloth::tear(Spring* s) {
 		Spring* ss22 = addStructSpring(pp2, nb_p2, struct_k_, true);
 		ss21->triangles_.push_back(tt1);
 		ss22->triangles_.push_back(tt2);	
-		
-		getStructSpring(p1, nb_p2)->replaceTriangle(t2, tt1);
-		getStructSpring(p2, nb_p2)->replaceTriangle(t2, tt2);
+		this->spring_map_[p1][nb_p2]->replaceTriangle(t2, tt1);
+		this->spring_map_[p2][nb_p2]->replaceTriangle(t2, tt2);
 		for(Spring* nb_p2_s : nb_p2->springs_) {
 			nb_p2_s->removeBendSpring();
 		}
@@ -1186,7 +936,7 @@ void Cloth::refreshCache() {
 	vertex_normals.clear();
 	for(Triangle* triangle : triangles_) {
 		for(Particle* p : triangle->particles_) {
-			// std::cout << "particle pushed to cache: " << glm::to_string(p->position_) << std::endl;
+			
 			vertices.push_back(p->position_);
 			cloth_uv_coords.push_back(p->uv_coords_);
 			vertex_normals.push_back(p->vertex_normal_);
@@ -1226,7 +976,7 @@ void Cloth::animate(float delta_t) {
 	}
 
 	for(Particle* particle : particles_) {
-		particle->resetForce();
+		particle->force_ =  glm::vec3(0.0f, - 1.0 * particle->mass_ * G, 0.0f);
 	}
 
 
@@ -1252,8 +1002,11 @@ void Cloth::animate(float delta_t) {
 		if(!particle->fixed_) {
 			glm::vec3 damper_force = -damper_ * particle->velocity_;
 			glm::vec3 acceleration = (particle->force_ + damper_force) / particle->mass_;
-			particle->velocity_ += acceleration * delta_t * 0.5f;
-			particle->position_ += particle->velocity_ * delta_t;
+			particle->velocity_ += acceleration * delta_t  ;
+			particle->position_[0] += particle->velocity_[0] * delta_t;
+			particle->position_[1] += particle->velocity_[1] * delta_t;
+			particle->position_[2] += particle->velocity_[2] * delta_t;
+			
 
 		}
 	}
@@ -1273,7 +1026,12 @@ void Cloth::animate(float delta_t) {
 		}
 	}
 
-	collisionWithFloor();
+	for(Particle* p : particles_) {
+		if(p->position_.y < kFloorY){
+			p->position_.y = kFloorY + kFloorEps;
+			p->setFixed();
+		}
+	}
 	// particle positions determined. Compute vertex normals.
 	for(Particle* p : particles_) {
 		p->face_normals_.clear();
@@ -1294,7 +1052,7 @@ void Cloth::animate(float delta_t) {
 	}
 	setCurrentParticle();
 	setCurrentSpring();
-	// std::cout << "pick ray start: " << glm::to_string(pick_ray_start) << std::endl;
+	
 	if(picked_spring_) {
 		if(to_tear && !picked_spring_->is_secondary_) {
 			tear(picked_spring_);
@@ -1360,7 +1118,7 @@ void Cloth::groupNeighbors(Particle* p, std::map<int, std::unordered_set<Particl
 			if(containsStructSpring(p1, p2)) {
 				// std::cout << "spring " << i << " connected to spring " << j << std::endl;
 				uf[findRoot(uf, j)] = findRoot(uf, i);
-				nb_springs.push_back(getStructSpring(p1, p2));
+				nb_springs.push_back(spring_map_[p1][p2]);
 			}
 		}
 	}
@@ -1403,19 +1161,26 @@ void Cloth::duplicateParticles(Particle* p, std::map<int, std::unordered_set<Par
 		if(group_count == 1) break;	// if only one group, don't need to split the origin particle
 		group_count--;
 		const std::unordered_set<Particle*>& group_particles = group.second;
-		Particle* p_copy = new Particle(*p);
+		
+		// 	fixed_(old_obj.fixed_), duplicated_(true) , old_position_(old_obj.old_position_)
+		Particle* p_copy = new Particle(p->init_position_, p->position_, p->mass_, p->uv_coords_,  p->grid_x_, p->grid_z_, p->is_secondary_);
+		p_copy->force_ = p->force_;
+		p_copy->velocity_ =p->velocity_;
+		p_copy->fixed_ = p->fixed_;
+		p_copy->old_position_ = p->old_position_;
+		p_copy->duplicated_= true;
 		new_particles.push_back(p_copy);
 		for(Particle* nb_particle : group_particles) {
-			Spring* s = getStructSpring(p, nb_particle);
+			Spring* s = this->spring_map_[p][nb_particle];
 			// replace the particle in the original spring
 			p->springs_.erase(s);
-			spring_map_[p][nb_particle] = nullptr;
-			spring_map_[nb_particle][p] = nullptr;
+			this->spring_map_[p][nb_particle] = nullptr;
+			this->spring_map_[nb_particle][p] = nullptr;
 
 			s->replaceParticle(p, p_copy);
 			p_copy->springs_.insert(s);
-			spring_map_[p_copy][nb_particle] = s;
-			spring_map_[nb_particle][p_copy] = s;
+			this->spring_map_[p_copy][nb_particle] = s;
+			this->spring_map_[nb_particle][p_copy] = s;
 			
 
 			for(Triangle* t : s->triangles_) {	// replace the particle in old triangles. At most two triangles
@@ -1474,25 +1239,21 @@ bool Cloth::containsStructSpring(Particle* p1, Particle* p2) {
 Spring* Cloth::addStructSpring(Particle* p1, Particle* p2, float k, bool is_secondary) {
 	
 	Spring* s = new Spring(p1, p2, k, is_secondary);
-	spring_map_[p1][p2] = s;
-	spring_map_[p2][p1] = s;
+	this->spring_map_[p1][p2] = s;
+	this->spring_map_[p2][p1] = s;
 	p1->springs_.insert(s);
 	p2->springs_.insert(s);
 
 	springs_.insert(s);
 	return s;
 }
-Spring* Cloth::getStructSpring(Particle* p1, Particle* p2) {
-	
-	return spring_map_[p1][p2];
-}
 
 void Cloth::removeStructSpring(Spring* s) {
 	s->p1_->springs_.erase(s);
 	s->p2_->springs_.erase(s);
 	springs_.erase(s);
-	spring_map_[s->p1_][s->p2_] = nullptr;
-	spring_map_[s->p2_][s->p1_] = nullptr;
+	this->spring_map_[s->p1_][s->p2_] = nullptr;
+	this->spring_map_[s->p2_][s->p1_] = nullptr;
 	delete s;
 }
 

@@ -14,17 +14,9 @@ image.h
 string
 -
 
-../lib/utgraphicsutil/debuggl.h
-
 ../lib/utgraphicsutil/image.h
 vector
 -
-
-../lib/utgraphicsutil/jpegio.h
-string
--
-image.h
-../lib/utgraphicsutil/image.h
 
 ../lib/utgraphicsutil/material.h
 image.h
@@ -32,6 +24,36 @@ image.h
 glm/glm.hpp
 -
 memory
+-
+
+/home/khurem/Programming Projects/massspring/src/cloth_geometry.cc
+config.h
+/home/khurem/Programming Projects/massspring/src/config.h
+cloth_geometry.h
+/home/khurem/Programming Projects/massspring/src/cloth_geometry.h
+texture_to_render.h
+/home/khurem/Programming Projects/massspring/src/texture_to_render.h
+fstream
+-
+queue
+-
+iostream
+-
+stdlib.h
+-
+time.h
+-
+glm/gtx/string_cast.hpp
+-
+stdexcept
+-
+glm/gtx/io.hpp
+-
+glm/gtx/transform.hpp
+-
+glm/gtc/quaternion.hpp
+-
+map
 -
 
 /home/khurem/Programming Projects/massspring/src/cloth_geometry.h
@@ -62,211 +84,5 @@ map
 
 /home/khurem/Programming Projects/massspring/src/config.h
 
-/home/khurem/Programming Projects/massspring/src/cxxtimer.hpp
-chrono
--
-
-/home/khurem/Programming Projects/massspring/src/gui.cc
-gui.h
-/home/khurem/Programming Projects/massspring/src/gui.h
-config.h
-/home/khurem/Programming Projects/massspring/src/config.h
-jpegio.h
--
-iostream
--
-algorithm
--
-math.h
--
-glm/gtx/string_cast.hpp
--
-debuggl.h
--
-glm/gtc/matrix_access.hpp
--
-glm/gtc/matrix_transform.hpp
--
-glm/gtx/quaternion.hpp
--
-glm/gtx/transform.hpp
--
-
-/home/khurem/Programming Projects/massspring/src/gui.h
-glm/glm.hpp
--
-cloth_geometry.h
-/home/khurem/Programming Projects/massspring/src/cloth_geometry.h
-glm/gtc/matrix_transform.hpp
--
-GLFW/glfw3.h
--
-cxxtimer.hpp
-/home/khurem/Programming Projects/massspring/src/cxxtimer.hpp
-
-/home/khurem/Programming Projects/massspring/src/main.cc
-GL/glew.h
--
-cloth_geometry.h
-/home/khurem/Programming Projects/massspring/src/cloth_geometry.h
-procedure_geometry.h
-/home/khurem/Programming Projects/massspring/src/procedure_geometry.h
-render_pass.h
-/home/khurem/Programming Projects/massspring/src/render_pass.h
-tictoc.h
-/home/khurem/Programming Projects/massspring/src/tictoc.h
-config.h
-/home/khurem/Programming Projects/massspring/src/config.h
-gui.h
-/home/khurem/Programming Projects/massspring/src/gui.h
-texture_to_render.h
 /home/khurem/Programming Projects/massspring/src/texture_to_render.h
-algorithm
--
-fstream
--
-iostream
--
-string
--
-vector
--
-glm/gtx/string_cast.hpp
--
-glm/gtx/component_wise.hpp
--
-glm/gtx/rotate_vector.hpp
--
-glm/gtx/string_cast.hpp
--
-glm/gtx/io.hpp
--
-debuggl.h
--
-shaders/default.vert
-/home/khurem/Programming Projects/massspring/src/shaders/default.vert
-shaders/blending.vert
-/home/khurem/Programming Projects/massspring/src/shaders/blending.vert
-shaders/default.geom
-/home/khurem/Programming Projects/massspring/src/shaders/default.geom
-shaders/default.frag
-/home/khurem/Programming Projects/massspring/src/shaders/default.frag
-shaders/floor.frag
-/home/khurem/Programming Projects/massspring/src/shaders/floor.frag
-shaders/bone.vert
-/home/khurem/Programming Projects/massspring/src/shaders/bone.vert
-shaders/bone.frag
-/home/khurem/Programming Projects/massspring/src/shaders/bone.frag
-shaders/cylinder.vert
-/home/khurem/Programming Projects/massspring/src/shaders/cylinder.vert
-shaders/cylinder.frag
-/home/khurem/Programming Projects/massspring/src/shaders/cylinder.frag
-shaders/preview.vert
-/home/khurem/Programming Projects/massspring/src/shaders/preview.vert
-shaders/preview.frag
-/home/khurem/Programming Projects/massspring/src/shaders/preview.frag
-shaders/scroll.vert
-/home/khurem/Programming Projects/massspring/src/shaders/scroll.vert
-shaders/scroll.frag
-/home/khurem/Programming Projects/massspring/src/shaders/scroll.frag
-shaders/cloth.vert
-/home/khurem/Programming Projects/massspring/src/shaders/cloth.vert
-shaders/cloth.frag
-/home/khurem/Programming Projects/massspring/src/shaders/cloth.frag
-shaders/spring.vert
-/home/khurem/Programming Projects/massspring/src/shaders/spring.vert
-shaders/spring.frag
-/home/khurem/Programming Projects/massspring/src/shaders/spring.frag
-shaders/bend_spring.vert
-/home/khurem/Programming Projects/massspring/src/shaders/bend_spring.vert
-shaders/bend_spring.frag
-/home/khurem/Programming Projects/massspring/src/shaders/bend_spring.frag
-shaders/cloth.geom
-/home/khurem/Programming Projects/massspring/src/shaders/cloth.geom
-
-/home/khurem/Programming Projects/massspring/src/procedure_geometry.h
-vector
--
-glm/glm.hpp
--
-
-/home/khurem/Programming Projects/massspring/src/render_pass.h
-vector
--
-map
--
-functional
--
-material.h
--
-shader_uniform.h
-/home/khurem/Programming Projects/massspring/src/shader_uniform.h
-
-/home/khurem/Programming Projects/massspring/src/shader_uniform.h
-GL/glew.h
--
-debuggl.h
--
-string
--
-vector
--
-glm/glm.hpp
--
-functional
--
-type_traits
--
-memory
--
-iostream
--
-glm/gtx/io.hpp
--
-
-/home/khurem/Programming Projects/massspring/src/shaders/bend_spring.frag
-
-/home/khurem/Programming Projects/massspring/src/shaders/bend_spring.vert
-
-/home/khurem/Programming Projects/massspring/src/shaders/blending.vert
-
-/home/khurem/Programming Projects/massspring/src/shaders/bone.frag
-
-/home/khurem/Programming Projects/massspring/src/shaders/bone.vert
-
-/home/khurem/Programming Projects/massspring/src/shaders/cloth.frag
-
-/home/khurem/Programming Projects/massspring/src/shaders/cloth.geom
-
-/home/khurem/Programming Projects/massspring/src/shaders/cloth.vert
-
-/home/khurem/Programming Projects/massspring/src/shaders/cylinder.frag
-
-/home/khurem/Programming Projects/massspring/src/shaders/cylinder.vert
-
-/home/khurem/Programming Projects/massspring/src/shaders/default.frag
-
-/home/khurem/Programming Projects/massspring/src/shaders/default.geom
-
-/home/khurem/Programming Projects/massspring/src/shaders/default.vert
-
-/home/khurem/Programming Projects/massspring/src/shaders/floor.frag
-
-/home/khurem/Programming Projects/massspring/src/shaders/preview.frag
-
-/home/khurem/Programming Projects/massspring/src/shaders/preview.vert
-
-/home/khurem/Programming Projects/massspring/src/shaders/scroll.frag
-
-/home/khurem/Programming Projects/massspring/src/shaders/scroll.vert
-
-/home/khurem/Programming Projects/massspring/src/shaders/spring.frag
-
-/home/khurem/Programming Projects/massspring/src/shaders/spring.vert
-
-/home/khurem/Programming Projects/massspring/src/texture_to_render.h
-
-/home/khurem/Programming Projects/massspring/src/tictoc.h
-stdint.h
--
 
