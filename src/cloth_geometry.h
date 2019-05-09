@@ -226,19 +226,19 @@ private:
 
 #define G (4*9.8)
 #define PI 3.1416
-#define SPRING_CYLINDER_RADIUS 0.1f
-#define PARTICLE_RADIUS 0.5f
+#define SPRING_CYLINDER_RADIUS 0.3f
+#define POINT_RADIUS 0.1f
 
 
 struct Spring;
 struct Triangle;
 
 // Nodes in the spring.
-struct Particle {
-	Particle(glm::vec3 init_position, glm::vec3 curr_position, float mass, glm::vec2 uv_coords, int grid_x = -1, int grid_z = -1, bool is_secondary = false);
-	Particle(glm::vec3 init_position, glm::vec3 curr_position, float mass, glm::vec2 uv_coords, bool is_secondary);
-	Particle(const Particle& old_obj);
-	~Particle();
+struct Point {
+	Point(glm::vec3 init_position, glm::vec3 curr_position, float mass, glm::vec2 uv_coords, int grid_x = -1, int grid_z = -1);
+	Point(glm::vec3 init_position, glm::vec3 curr_position, float mass, glm::vec2 uv_coords, bool is_secondary);
+	Point(const Point& old_obj);
+	~Point();
 	
 	void resetForce();	// clear all forces except for gravity.
 	void addForce(glm::vec3 f);
@@ -258,35 +258,33 @@ struct Particle {
 	int grid_x_, grid_z_;
 	float mass_;
 	bool fixed_ = false;
-	bool is_secondary_ = false;
-	bool duplicated_ = false;
 
 };
 
 struct Triangle {
-	Triangle(Particle* p1, Particle* p2, Particle* p3);
+	Triangle(Point* p1, Point* p2, Point* p3);
 	Triangle();
 	~Triangle();
-	std::vector<Particle*> particles_;	// length == 3. Three particles.
+	std::vector<Point*> points;	// length == 3. Three Points.
 	glm::vec3 face_normal_;
 };
 
 struct Spring {
 
-	Spring(Particle* p1, Particle* p2, float k, bool is_secondary = false);	// k is the spring constant
+	Spring(Point* p1, Point* p2, float k, bool is_secondary = false);	// k is the spring constant
 	~Spring();
 
 	void computeForceQuantity();	// compute the force quantity, and store it in force_quantity_
-	void applyForce();	// compute two force vectors, and apply them to two particles connected to the spring.
+	void applyForce();	// compute two force vectors, and apply them to two Points connected to the spring.
 	void replaceTriangle(Triangle* t_old, Triangle* t_new);
-	void replaceParticle(Particle* p_old, Particle* p_new);
+	void replacePoint(Point* p_old, Point* p_new);
 	void removeBendSpring();
 
-	// std::vector<Particle*> nb_particles_;	// two particles neighboring to but not owned by the spring.
+	// std::vector<Point*> nb_points;	// two Points neighboring to but not owned by the spring.
 	std::vector<Triangle*> triangles_;	// a spring is neighbor to either 1 or 2 triangles.
 
-	Particle* p1_;
-	Particle* p2_;
+	Point* p1_;
+	Point* p2_;
 	Spring* bend_spring_ = nullptr;	// A bending spring (if there is one) related to this structural spring.
 									// If this spring itself is a bending spring, this attribute will simply be nullptr.
 	
@@ -306,9 +304,9 @@ public:
 	Cloth(int x_size, int z_size);
 	~Cloth();
 	void animate(float delta_t);	// recalculate the forces, velocities and positions. Finally update cache
-	Particle* getCurrentParticle() {return picked_particle_;}
+	Point* getCurrentPoint() {return picked_point_;}
 	void resetCloth();
-	// void bfsConstrain(std::queue<Particle*>& q);
+	// void bfsConstrain(std::queue<Point*>& q);
 
 
 	// The following vectors are cache for GPU rendering.
@@ -323,42 +321,42 @@ public:
 
 
 private:
-	int getParticleIdx(int x, int z);
+	int getPointIdx(int x, int z);
 	bool gridCoordValid(int x, int z);	
 	void refreshCache();	// update the cache for rendiering
 	void setInitAnchorNodes();
 	void tear(Spring* s);
 	void collisionWithFloor();
-	Particle* getNeighborParticle(Triangle* t1, Spring* s);
-	bool containsStructSpring(Particle* p1, Particle* p2);
-	Spring* addStructSpring(Particle* p1, Particle* p2, float k, bool is_secondary);
-	Spring* getStructSpring(Particle* p1, Particle* p2);
+	Point* getNeighborPoint(Triangle* t1, Spring* s);
+	bool containsStructSpring(Point* p1, Point* p2);
+	Spring* addStructSpring(Point* p1, Point* p2, float k, bool is_secondary);
+	Spring* getStructSpring(Point* p1, Point* p2);
 	void removeStructSpring(Spring* s);
 
 	void setCurrentSpring();
-	void setCurrentParticle();
-	void groupNeighbors(Particle* p, std::map<int, std::unordered_set<Particle*>>& groups);
-	void duplicateParticles(Particle* p, std::map<int, std::unordered_set<Particle*>>& groups, std::vector<Particle*>& new_particles);
+	void setCurrentPoint();
+	void groupNeighbors(Point* p, std::map<int, std::unordered_set<Point*>>& groups);
+	void duplicatePoints(Point* p, std::map<int, std::unordered_set<Point*>>& groups, std::vector<Point*>& new_points);
 	
 	int findRoot(std::vector<int>& uf, int idx);	// a helper function for union-find algorithm
 
-	void bfsConstrain(std::queue<Particle*>& q);
+	void bfsConstrain(std::queue<Point*>& q);
 
-	std::vector<Particle*> particles_;
+	std::vector<Point*> points;
 	std::unordered_set<Triangle*> triangles_;	//stored in a hashset for constant time access, modify and delete
 	std::unordered_set<Spring*> springs_;		//stored in a hashset for constant time access, modify and delete
-	std::map<Particle*, std::map<Particle*, Spring*>> spring_map_; // key: particle pairs. Value: springs.
+	std::map<Point*, std::map<Point*, Spring*>> spring_map_; // key: Point pairs. Value: springs.
 
 	Spring* picked_spring_ = nullptr;
-	Particle* picked_particle_ = nullptr;
+	Point* picked_point_ = nullptr;
 	int x_size_, z_size_;
 	float time_ = 0.0f;
 	const float grid_width_ = 1.0;
 	const float struct_k_ = 100.0;	// spring constant of bending springs
 	const float bend_sheer_k_ = 20.0;		// spring constant of bending springs. (there bending springs also used as sheering springs)
 	const float damper_ = 0.30;
-	const float particle_mass_ = 0.1;	// init mass of every particle.
-	const float init_height_ = 50.0;		// init height of the cloth. .e. init z position of all particles)
+	const float point_mass_ = 0.1;	// init mass of every point.
+	const float init_height_ = 50.0;		// init height of the cloth. .e. init z position of all points)
 
 };
 

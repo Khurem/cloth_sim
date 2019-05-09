@@ -618,7 +618,9 @@ int main(int argc, char* argv[])
 			gui.showPrev = false;
 			mesh.refreshFrame = -1;
 		}
-		if (draw_cloth) {
+
+	
+			if (draw_cloth) {
 			glDisable(GL_CULL_FACE);
 			cloth_pass.updateVBO(0, cloth.vertices.data(), cloth.vertices.size());
 			cloth_pass.updateVBO(1, cloth.cloth_uv_coords.data(), cloth.cloth_uv_coords.size());
@@ -628,7 +630,13 @@ int main(int argc, char* argv[])
 			CHECK_GL_ERROR(glDrawArrays(GL_TRIANGLES,
 										0,
 		                              	cloth.vertices.size()));
-		}
+// 			glVertexAttribDivisor(0, 0); // particles vertices : always reuse the same 4 vertices -> 0
+// glVertexAttribDivisor(1, 1); // positions : one per quad (its center) -> 1
+// glVertexAttribDivisor(2, 4); // color : one per quad -> 1
+// 			glDrawArraysInstanced(GL_TRIANGLES, 0, cloth.vertices.size(), 2);
+			}
+		
+		
 
 // 		if (draw_struct_spring) {
 // 			struct_spring_pass.updateVBO(0, cloth.struct_spring_vertices.data(), cloth.struct_spring_vertices.size());

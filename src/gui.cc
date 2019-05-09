@@ -288,8 +288,8 @@ void GUI::mousePosCallback(double mouse_x, double mouse_y)
 	glm::vec2 mouse_delta = mouse_end - mouse_start;
 
 	bool drag_camera = drag_state_ && current_button_ == GLFW_MOUSE_BUTTON_RIGHT;
-	bool tear_particle = (!control_pressed_) && drag_state_ && current_button_ == GLFW_MOUSE_BUTTON_LEFT;
-	bool drag_particle = control_pressed_ && drag_state_ && current_button_ == GLFW_MOUSE_BUTTON_LEFT;
+	bool tear_point = (!control_pressed_) && drag_state_ && current_button_ == GLFW_MOUSE_BUTTON_LEFT;
+	bool drag_point = control_pressed_ && drag_state_ && current_button_ == GLFW_MOUSE_BUTTON_LEFT;
 	bool drag_bone = drag_state_ && current_button_ == GLFW_MOUSE_BUTTON_LEFT;
 
 	bool drag_scroll = scrolling && current_button_ == GLFW_MOUSE_BUTTON_LEFT;
@@ -401,14 +401,14 @@ if (mouse_x > view_width_)
 		cloth_->pick_ray_end = pick_ray_end;
 	}
 
-	if(tear_particle) {
+	if(tear_point) {
 		cloth_->to_tear = true;
 	}
 	else {
 		cloth_->to_tear = false;
 	}
 
-	if(drag_particle) {
+	if(drag_point) {
 		glm::vec3 mouse_pos = glm::unProject(glm::vec3(current_x_, current_y_, 1.0f),
 											view_matrix_,
 											projection_matrix_,
@@ -419,7 +419,7 @@ if (mouse_x > view_width_)
 											viewport);	
 
 		glm::vec3 darg_dist = mouse_pos - last_mouse_pos_;
-		Particle* p = cloth_->getCurrentParticle();
+		Point* p = cloth_->getCurrentPoint();
 		if(p) {
 			p->move(darg_dist);
 		}
@@ -429,7 +429,7 @@ if (mouse_x > view_width_)
 	
 }
 
-void dragParticle() {
+void dragPoint() {
 
 }
 
