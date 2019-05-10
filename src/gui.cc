@@ -400,14 +400,14 @@ if (mouse_x > view_width_)
 		cloth_->pick_ray_start = eye_;
 		cloth_->pick_ray_end = pick_ray_end;
 	}
-
+	cloth_->setCurrentPoint();
 	if(tear_point) {
 		cloth_->to_tear = true;
 	}
 	else {
 		cloth_->to_tear = false;
 	}
-
+	
 	if(drag_point) {
 		glm::vec3 mouse_pos = glm::unProject(glm::vec3(current_x_, current_y_, 1.0f),
 											view_matrix_,
@@ -418,10 +418,10 @@ if (mouse_x > view_width_)
 											projection_matrix_,
 											viewport);	
 
-		glm::vec3 darg_dist = mouse_pos - last_mouse_pos_;
+		glm::vec3 drag_dist = mouse_pos - last_mouse_pos_;
 		Point* p = cloth_->getCurrentPoint();
 		if(p) {
-			p->move(darg_dist);
+			p->position_ += drag_dist * 0.5f;
 		}
 	}
 

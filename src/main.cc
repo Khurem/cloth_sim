@@ -169,7 +169,7 @@ int main(int argc, char* argv[])
 	std::vector<glm::uvec3> floor_faces;
 	create_floor(floor_vertices, floor_faces);
 	int cloth_x_size = 16;
-	int cloth_z_size = 21;
+	int cloth_z_size = 16;
 	Cloth cloth(cloth_x_size, cloth_z_size);
 	gui.assignCloth(&cloth);
 	TicTocTimer *timer = new TicTocTimer;
@@ -638,14 +638,14 @@ int main(int argc, char* argv[])
 		
 		
 
-// 		if (draw_struct_spring) {
-// 			struct_spring_pass.updateVBO(0, cloth.struct_spring_vertices.data(), cloth.struct_spring_vertices.size());
-// 			struct_spring_pass.setup();
+		if (draw_struct_spring) {
+			struct_spring_pass.updateVBO(0, cloth.struct_spring_vertices.data(), cloth.struct_spring_vertices.size());
+			struct_spring_pass.setup();
 
-// 			CHECK_GL_ERROR(glDrawArrays(GL_LINES,
-// 										0,
-// 		                              	cloth.struct_spring_vertices.size()));
-// }
+			CHECK_GL_ERROR(glDrawArrays(GL_LINES,
+										0,
+		                              	cloth.struct_spring_vertices.size()));
+}
 
 		// if (draw_bend_spring) {
 		// 	bend_spring_pass.updateVBO(0, cloth.bend_spring_vertices.data(), cloth.bend_spring_vertices.size());

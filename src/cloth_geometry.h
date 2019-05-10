@@ -226,8 +226,8 @@ private:
 
 #define G (4*9.8)
 #define PI 3.1416
-#define SPRING_CYLINDER_RADIUS 0.3f
-#define POINT_RADIUS 0.1f
+#define SPRING_CYLINDER_RADIUS 0.2f
+#define POINT_RADIUS 0.9f
 
 
 struct Spring;
@@ -289,9 +289,10 @@ struct Spring {
 									// If this spring itself is a bending spring, this attribute will simply be nullptr.
 	
 	float force_quantity_;
+	glm::vec3 fork;
 	float init_length_;
 	float k_;
-	float max_deform_rate_ = 0.3f;
+	float max_deform_rate_ = 0.1f;
 	float min_length_, max_length_;
 	bool is_secondary_ = false;
 	bool constrained_ = false;
@@ -307,7 +308,8 @@ public:
 	Point* getCurrentPoint() {return picked_point_;}
 	void resetCloth();
 	// void bfsConstrain(std::queue<Point*>& q);
-
+	void setCurrentSpring();
+	void setCurrentPoint();
 
 	// The following vectors are cache for GPU rendering.
 	std::vector<glm::vec3> vertices;		// for rendering the cloth
@@ -333,8 +335,7 @@ private:
 	Spring* getStructSpring(Point* p1, Point* p2);
 	void removeStructSpring(Spring* s);
 
-	void setCurrentSpring();
-	void setCurrentPoint();
+	
 	void groupNeighbors(Point* p, std::map<int, std::unordered_set<Point*>>& groups);
 	void duplicatePoints(Point* p, std::map<int, std::unordered_set<Point*>>& groups, std::vector<Point*>& new_points);
 	
@@ -351,7 +352,7 @@ private:
 	Point* picked_point_ = nullptr;
 	int x_size_, z_size_;
 	float time_ = 0.0f;
-	const float grid_width_ = 1.0;
+
 	const float struct_k_ = 100.0;	// spring constant of bending springs
 	const float bend_sheer_k_ = 20.0;		// spring constant of bending springs. (there bending springs also used as sheering springs)
 	const float damper_ = 0.30;
