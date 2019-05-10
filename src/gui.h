@@ -50,6 +50,7 @@ float time_speed_ = 1.0;
 	static void MouseScrollCallback(GLFWwindow* window, double dx, double dy);
 	float line_segment_distance(const glm::vec3& line1_start, const glm::vec3& line1_end, 
 							const glm::vec3& line2_start, const glm::vec3& line2_end);
+	float line_point_distance(glm::vec3& line_start, glm::vec3& line_end, glm::vec3& point);
 	
 	// float angle_between_two_directs_2D(glm::vec2 direct1, glm::vec2 direct2);
 	

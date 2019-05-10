@@ -43,8 +43,6 @@ src/CMakeFiles/cloth.dir/main.cc.o
  /home/khurem/Programming Projects/massspring/src/procedure_geometry.h
  /home/khurem/Programming Projects/massspring/src/render_pass.h
  /home/khurem/Programming Projects/massspring/src/shader_uniform.h
- /home/khurem/Programming Projects/massspring/src/shaders/bend_spring.frag
- /home/khurem/Programming Projects/massspring/src/shaders/bend_spring.vert
  /home/khurem/Programming Projects/massspring/src/shaders/blending.vert
  /home/khurem/Programming Projects/massspring/src/shaders/bone.frag
  /home/khurem/Programming Projects/massspring/src/shaders/bone.vert

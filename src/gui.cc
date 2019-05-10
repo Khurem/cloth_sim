@@ -107,13 +107,7 @@ void GUI::keyCallback(int key, int scancode, int action, int mods)
 			pose_changed_ == true;
 			mesh_->updateAnimation();
 	}
-	} else if (key == GLFW_KEY_C && action != GLFW_RELEASE) {
-		fps_mode_ = !fps_mode_;
-	} else if (key == GLFW_KEY_LEFT_BRACKET && action == GLFW_RELEASE) {
-		time_speed_ /= 2.0;
-	} else if (key == GLFW_KEY_RIGHT_BRACKET && action == GLFW_RELEASE) {
-		time_speed_ *= 2.0;
-	} else if (key == GLFW_KEY_T && action != GLFW_RELEASE) {
+	}  else if (key == GLFW_KEY_T && action != GLFW_RELEASE) {
 		
 	}
 
@@ -269,7 +263,17 @@ float line_segment_distance(const glm::vec3& line1_start, const glm::vec3& line1
 // 	return -theta;
 
 // }
+float GUI::line_point_distance(glm::vec3& line_start, glm::vec3& line_end, glm::vec3& point) {
+    glm::vec3 sp = point - line_start;
+    glm::vec3 se = line_end - line_start;
+    float prj_len = glm::dot(glm::normalize(sp), glm::normalize(se)) * glm::length(sp);
+    float sp_len = glm::length(sp);
 
+  
+
+    float res = sqrt(sp_len * sp_len - prj_len * prj_len);
+    return res;
+}
 
 void GUI::mousePosCallback(double mouse_x, double mouse_y)
 {
@@ -401,7 +405,16 @@ if (mouse_x > view_width_)
 		cloth_->pick_ray_start = eye_;
 		cloth_->pick_ray_end = pick_ray_end;
 	}
-	cloth_->setCurrentPoint();
+	// cloth_->setCurrentPoint();
+	cloth_->picked_point_ = nullptr;
+	float min_distance = std::numeric_limits<float>::max();
+	for(Point* p : cloth_->points) {
+		float curr_distance = line_point_distance(cloth_->pick_ray_start, cloth_->pick_ray_end, p->position_);
+		if((curr_distance < POINT_RADIUS) && (curr_distance < min_distance)) {
+			min_distance = curr_distance;
+			cloth_->picked_point_ = p;
+		}
+	}
 	if(tear_point) {
 		cloth_->to_tear = true;
 	}
@@ -420,9 +433,9 @@ if (mouse_x > view_width_)
 											viewport);	
 
 		glm::vec3 drag_dist = mouse_pos - last_mouse_pos_;
-		Point* p = cloth_->getCurrentPoint();
+		Point* p = cloth_->picked_point_;
 		if(p) {
-			p->position_ += drag_dist * 0.5f;
+			p->position_ += drag_dist * 0.3f;
 		}
 	}
 

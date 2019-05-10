@@ -42,8 +42,6 @@ src/CMakeFiles/cloth.dir/main.cc.o: ../src/main.cc
 src/CMakeFiles/cloth.dir/main.cc.o: ../src/procedure_geometry.h
 src/CMakeFiles/cloth.dir/main.cc.o: ../src/render_pass.h
 src/CMakeFiles/cloth.dir/main.cc.o: ../src/shader_uniform.h
-src/CMakeFiles/cloth.dir/main.cc.o: ../src/shaders/bend_spring.frag
-src/CMakeFiles/cloth.dir/main.cc.o: ../src/shaders/bend_spring.vert
 src/CMakeFiles/cloth.dir/main.cc.o: ../src/shaders/blending.vert
 src/CMakeFiles/cloth.dir/main.cc.o: ../src/shaders/bone.frag
 src/CMakeFiles/cloth.dir/main.cc.o: ../src/shaders/bone.vert
