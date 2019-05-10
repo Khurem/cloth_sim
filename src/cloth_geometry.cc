@@ -613,13 +613,14 @@ Spring::~Spring()
 }
 
 void Spring::computeForceQuantity() {
+	// this->fork = glm::vec3(0.0f, 0.0f,0.0f);
 	float curr_length = glm::length(p1_->position_ - p2_->position_);
 	float init_length = glm::length(p1_->init_position_ - p2_->init_position_);
 	//(glm::dot(p1_->velocity_ - p2_->velocity_, p1_->position_ - p2_->position_)/ curr_length) * 
 	glm::vec3 normLen = (p1_->position_ - p2_->position_) / curr_length;
 	float velPos = 0.60f * glm::dot(p1_->velocity_ - p2_->velocity_,p1_->position_ - p2_->position_) / curr_length;
 	float restComp = 20.0f * (curr_length - init_length);
-	fork = -((velPos + restComp) * normLen);
+	this->fork = -((velPos + restComp) * normLen);
 	float deform_rate =  (init_length - curr_length) / init_length;
 	// printf("%f deforrrm\n", deform_rate);
 	// deform_rate = glm::clamp(deform_rate, -1.0f, 1.0f);
@@ -650,23 +651,9 @@ void Spring::replaceTriangle(Triangle* t_old, Triangle* t_new) {
 	}
 }
 
-void Spring::replacePoint(Point* p_old, Point* p_new) {
-	if(p1_ == p_old) {
-		p1_ = p_new;
-	}
-	else if(p2_ == p_old) {
-		p2_ = p_new;
-	}
-	
+void Cloth::resetCloth() {
+	delete this;
 }
-
-// void Cloth::resetCloth() {
-// 	for(Point* p : points) {
-// 		p->position_ = p->init_position_;
-// 		p->velocity_ = glm::vec3(0.0);
-// 	}
-	
-// }
 
 
 Cloth::Cloth(int x_size, int z_size):
@@ -704,7 +691,9 @@ Cloth::Cloth(int x_size, int z_size):
 				flip = false;
 			}
 			// x >= 0 && x < x_size_ && z >= 0 && z < z_size_
-				if(gridCoordValid(x, z + 1) && gridCoordValid(x + 1, z + zee)) {
+				
+				if((x >= 0 && x < x_size_ && (z + 1) >= 0 && (z + 1) < z_size_) && 
+				((x + 1) >= 0 && (x + 1) < x_size_ && (z + zee) >= 0 && (z + zee) < z_size_)) {
 					
 					
 					
@@ -714,7 +703,9 @@ Cloth::Cloth(int x_size, int z_size):
 					oneD = true;
 					
 				}
-				if(gridCoordValid(x, z + 1) && gridCoordValid(x - 1, z + zee)) {
+				
+				if((x >= 0 && x < x_size_ && (z + 1) >= 0 && (z + 1) < z_size_) &&
+				( (x - 1) >= 0 && (x - 1) < x_size_ && (z + zee) >= 0 && (z + zee) < z_size_)) {
 					triangle2->points.push_back(points[x * z_size_ + z]);
 					triangle2->points.push_back(points[(x - 1) * z_size_ + (z + zee)]);
 					triangle2->points.push_back(points[(x) * z_size_ + (z + 1)]);
@@ -750,7 +741,12 @@ Cloth::Cloth(int x_size, int z_size):
 			Point* p1 = triangle->points[idx];
 			Point* p2 = triangle->points[(idx + 1) % 3];
 			if(!containsStructSpring(p1, p2)) {
-				Spring* s = addStructSpring(p1, p2, struct_k_, false);	// problem: how find bending spring?
+				Spring* s = new Spring(p1, p2, struct_k_, false);
+				this->spring_map_[p1][p2] = s;
+				this->spring_map_[p2][p1] = s;
+				p1->springs_.insert(s);
+				p2->springs_.insert(s);
+				springs_.insert(s);
 				s->triangles_.push_back(triangle);
 			}
 			else {
@@ -796,8 +792,10 @@ Cloth::Cloth(int x_size, int z_size):
 		
 		
 
-		
-		if(gridCoordValid(bend_x1, bend_z1) && gridCoordValid(bend_x2, bend_z2)) {
+		 
+		 
+		if((bend_x1 >= 0 && bend_x1 < x_size_ && bend_z1 >= 0 && bend_z1 < z_size_) && 
+		(bend_x2 >= 0 && bend_x2 < x_size_ && bend_z2 >= 0 && bend_z2 < z_size_)) {
 			
 			Spring* bend_spring = new Spring(points[bend_x1 * z_size_ + bend_z1], 
 										points[bend_x2 * z_size_ + bend_z2],
@@ -842,17 +840,20 @@ void Cloth::tear(Spring* s) {
 
 	glm::vec3 pp1_curr_pos = p1->position_ + (curr_center_position - p1->position_) * 0.50f;
 	Point* pp1 = new Point(init_center_position, pp1_curr_pos, p1->mass_ / 2.0, center_uv_coords, -1, -1);
-	points.push_back(pp1);
-	Spring* ss1 = addStructSpring(p1, pp1, struct_k_, true);
-
 	glm::vec3 pp2_curr_pos = p2->position_ + (curr_center_position - p2->position_) * 0.50f;
 	Point* pp2 = new Point(init_center_position, pp2_curr_pos, p2->mass_ / 2.0, center_uv_coords, -1, -1);
+	points.push_back(pp1);
 	points.push_back(pp2);
+	Spring* ss1 = addStructSpring(p1, pp1, struct_k_, true);
 	Spring* ss2 = addStructSpring(p2, pp2, struct_k_, true);
 	for(int x = 0; x < 2; x++){
 
 		if(t1) {
 			Point* nb_p1 = getNeighborPoint(t1, s);
+			// if(nb_p1 == nullptr){
+			// 	break;
+			// 	// printf("PROCESSEDIASDFOIANDFPIENF\n");
+			// }
 			Triangle* tt1 = new Triangle(nb_p1, p1, pp1);
 			Triangle* tt2 = new Triangle(nb_p1, pp2, p2);
 
@@ -862,32 +863,48 @@ void Cloth::tear(Spring* s) {
 			ss1->triangles_.push_back(tt1);
 			ss2->triangles_.push_back(tt2);
 
-			Spring* ss11 = addStructSpring(pp1, nb_p1, struct_k_, true);
-			Spring* ss12 = addStructSpring(pp2, nb_p1, struct_k_, true);
+			Spring* ss11 = new Spring(pp1, nb_p1, struct_k_, true);
+			this->spring_map_[pp1][nb_p1] = ss11;
+			this->spring_map_[nb_p1][pp1] = ss11;
+			pp1->springs_.insert(ss11);
+			nb_p1->springs_.insert(ss11);
+
+			springs_.insert(ss11);
+	
+			Spring* ss12 =  new Spring(pp2, nb_p1, struct_k_, true);
+			this->spring_map_[pp2][ nb_p1] = ss12 ;
+			this->spring_map_[ nb_p1][pp2] = ss12 ;
+			pp2->springs_.insert(ss12 );
+			nb_p1->springs_.insert(ss12 );
+
+			springs_.insert(ss12 );
 			ss11->triangles_.push_back(tt1);
 			ss12->triangles_.push_back(tt2);
+			
 			this->spring_map_[p1][nb_p1]->replaceTriangle(t1, tt1);
 			this->spring_map_[p2][nb_p1]->replaceTriangle(t1, tt2);
 			
 			for(Spring* nb_p1_s : nb_p1->springs_) {
 				if(nb_p1_s->bend_spring_ != nullptr) {
 					delete nb_p1_s->bend_spring_;
-				nb_p1_s->bend_spring_ = nullptr;
+					nb_p1_s->bend_spring_ = nullptr;
 				}
+
 			}
 			triangles_.erase(t1);
-			
+			// printf("PROCESSEDIASDdsadafsdfsddsgdfgdfgdfgdfgfgFOIANDFPIENF2\n");
 		}
-		
+		// printf("PROCESSEDIAsdfsdfsdfsjdnfksjdnfksdjfnksdjfnjsdkfjsdSDdsadafsdfsddsgdfgdfgdfgdfgfgFOIANDFPIENF3\n");
 		t1 = t2;
 	}
 	delete t1;
 	s->p1_->springs_.erase(s);
 	s->p2_->springs_.erase(s);
 	springs_.erase(s);
+
 	this->spring_map_[s->p1_][s->p2_] = nullptr;
 	this->spring_map_[s->p2_][s->p1_] = nullptr;
-	delete s;
+	// delete s;
 	
 }
 
@@ -930,7 +947,10 @@ void Cloth::animate(float delta_t) {
 	for(auto itr = points.begin(); itr != points.end(); itr++) {
 		std::map<int, std::unordered_set<Point*>> point_groups;
 		groupNeighbors(*itr, point_groups);
-		duplicatePoints(*itr, point_groups, splitted_points);
+		if(point_groups.size() > 1){
+			duplicatePoints(*itr, point_groups, splitted_points);
+		}
+		
 	}
 
 	for(Point* splitted_p : splitted_points) {
@@ -943,11 +963,18 @@ void Cloth::animate(float delta_t) {
 
 
 	// update forces
-	for(Spring* struct_s : springs_) {
+	for(Spring* struct_s : this->springs_) {
 		struct_s->computeForceQuantity();
 		// TODO: if force quantity exceeds limit, break the spring
-		struct_s->applyForce();
-		
+		// struct_s->applyForce();
+		struct_s->fork[0] = glm::clamp(struct_s->fork[0], -300.0f, 300.0f);
+		struct_s->fork[1] = glm::clamp(struct_s->fork[1], -300.0f, 300.0f);
+		struct_s->fork[2] = glm::clamp(struct_s->fork[2], -300.0f, 300.0f);
+		struct_s->p1_->force_ += struct_s->fork;
+		struct_s->p2_->force_ += -struct_s->fork;
+		if(std::fabs(struct_s->p1_->force_[0]) >=300 || std::fabs(struct_s->p1_->force_[1]) >=300 || std::fabs(struct_s->p1_->force_[2]) >=300){
+
+		}
 		if(struct_s->force_quantity_ >= std::abs(100.0f)) {
 			// struct_s->force_quantity_ = 5.0f;
 			// printf("typical forces are %f\n", struct_s->force_quantity_);
@@ -956,7 +983,13 @@ void Cloth::animate(float delta_t) {
 
 		if(struct_s->bend_spring_) {
 			struct_s->bend_spring_->computeForceQuantity();
-			struct_s->bend_spring_->applyForce();
+			// struct_s->bend_spring_->applyForce();
+			struct_s->bend_spring_->fork[0] = glm::clamp(struct_s->bend_spring_->fork[0], -300.0f, 300.0f);
+			struct_s->bend_spring_->fork[1] = glm::clamp(struct_s->bend_spring_->fork[1], -300.0f, 300.0f);
+			struct_s->bend_spring_->fork[2] = glm::clamp(struct_s->bend_spring_->fork[2], -300.0f, 300.0f);
+			struct_s->bend_spring_->p1_->force_ += struct_s->bend_spring_->fork;
+			struct_s->bend_spring_->p2_->force_ += -struct_s->bend_spring_->fork;
+			// printf("the power in this spring is %f %f %f\n", struct_s->bend_spring_->fork[0], struct_s->bend_spring_->fork[1], struct_s->bend_spring_->fork[2]);
 		}
 	}
 
@@ -1074,7 +1107,6 @@ void Cloth::groupNeighbors(Point* p, std::map<int, std::unordered_set<Point*>>& 
 
 	for(int i = 0; i < uf.size(); i++) {
 		if(uf[i] == i) {
-			// std::cout << "gorup " << i << " created" << std::endl;
 			groups[i] = std::unordered_set<Point*>();
 		}
 	}	
@@ -1102,22 +1134,19 @@ void Cloth::groupNeighbors(Point* p, std::map<int, std::unordered_set<Point*>>& 
 	}
 }
 
-// int Cloth::findRoot(std::vector<int>& uf, int idx) {
-// 	while(idx != uf[idx]) {
-// 		idx = uf[idx];
-// 	}
-// 	return idx;
-// }
+
 
 void Cloth::duplicatePoints(Point* p, std::map<int, std::unordered_set<Point*>>& groups, std::vector<Point*>& new_points) {
-	if(groups.size() <= 1) {
-		return;
-	} 
+	
 	int group_count = groups.size(); 
 	for(auto const& group : groups) {
-		if(group_count == 1) break;	
-		group_count--;
 		const std::unordered_set<Point*>& group_points = group.second;
+		if(group_count == 1) {
+			
+			break;	
+		}
+		group_count--;
+		
 		
 		Point* p_copy = new Point(p->init_position_, p->position_, p->mass_, p->uv_coords_,  p->grid_x_, p->grid_z_);
 		p_copy->force_ = p->force_;
@@ -1131,11 +1160,17 @@ void Cloth::duplicatePoints(Point* p, std::map<int, std::unordered_set<Point*>>&
 			this->spring_map_[p][nb_point] = nullptr;
 			this->spring_map_[nb_point][p] = nullptr;
 
-			s->replacePoint(p, p_copy);
+			// s->replacePoint(p, p_copy);
+			if(s->p1_ == p) {
+				s->p1_ = p_copy;
+			}
+			else if(s->p2_ == p) {
+				s->p2_ = p_copy;
+			}
 			p_copy->springs_.insert(s);
 			this->spring_map_[p_copy][nb_point] = s;
 			this->spring_map_[nb_point][p_copy] = s;
-			
+			// printf("galfsdf2\n");
 
 			for(Triangle* t : s->triangles_) {	
 				for(int p_idx = 0; p_idx < t->points.size(); p_idx++) {
@@ -1148,6 +1183,7 @@ void Cloth::duplicatePoints(Point* p, std::map<int, std::unordered_set<Point*>>&
 		}
 		
 	}
+	// printf("galfsdf3\n");
 }
 
 
@@ -1169,13 +1205,8 @@ void Cloth::setCurrentSpring() {
 
 
 
-bool Cloth::gridCoordValid(int x, int z) {
-	return x >= 0 && x < x_size_ && z >= 0 && z < z_size_;
-}
 
-bool Cloth::containsStructSpring(Point* p1, Point* p2) {
-	return (spring_map_[p1][p2] != nullptr) || (spring_map_[p2][p1] != nullptr);
-}
+
 
 Spring* Cloth::addStructSpring(Point* p1, Point* p2, float k, bool is_secondary) {
 	
@@ -1189,6 +1220,12 @@ Spring* Cloth::addStructSpring(Point* p1, Point* p2, float k, bool is_secondary)
 	return s;
 }
 
+// int Cloth::findRoot(std::vector<int>& uf, int idx) {
+// 	while(idx != uf[idx]) {
+// 		idx = uf[idx];
+// 	}
+// 	return idx;
+// }
 
 // void Cloth::bfsConstrain(std::queue<Point*>& q) {
 // 	while(!q.empty()) {
@@ -1211,6 +1248,9 @@ Spring* Cloth::addStructSpring(Point* p1, Point* p2, float k, bool is_secondary)
 // 	}
 
 // }
+bool Cloth::containsStructSpring(Point* p1, Point* p2) {
+	return (spring_map_[p1][p2] != nullptr) || (spring_map_[p2][p1] != nullptr);
+}
 
 
 void Cloth::setCurrentPoint() {

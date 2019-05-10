@@ -23,6 +23,8 @@ public:
 	GUI(GLFWwindow*, int view_width = -1, int view_height = -1, int preview_height = -1);
 	~GUI();
 	void assignMesh(Mesh*);
+	void assignCloth(Cloth*);
+	bool resetted = false;
 bool showPrev = false;
 float frame_shift = 0;
 int current_frame = -1;
@@ -38,7 +40,7 @@ float time_speed_ = 1.0;
 	void mouseScrollCallback(double dx, double dy);
 	void clearResetFlag() {reset_ms_system_ = false;}
 	void updateMatrices();
-	void assignCloth(Cloth* cloth) {cloth_ = cloth;}
+	
 	MatrixPointers getMatrixPointers() const;
 	void toggleDrawSpring() {enable_draw_spring_ = !enable_draw_spring_;}
 	bool enable_draw_spring_ = true;
@@ -67,11 +69,12 @@ float time_speed_ = 1.0;
 	float getCurrentPlayTime();
 	bool play_ = false;
 	cxxtimer::Timer timer;
+	Cloth* cloth_;
 
 private:
 	GLFWwindow* window_;
 	Mesh* mesh_;
-	Cloth* cloth_;
+	
 	int window_width_, window_height_;
 	int view_width_, view_height_;
 	int preview_height_;

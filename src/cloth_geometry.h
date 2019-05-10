@@ -310,7 +310,7 @@ public:
 	// void bfsConstrain(std::queue<Point*>& q);
 	void setCurrentSpring();
 	void setCurrentPoint();
-
+	int x_size_, z_size_;
 	// The following vectors are cache for GPU rendering.
 	std::vector<glm::vec3> vertices;		// for rendering the cloth
 	std::vector<glm::vec2> cloth_uv_coords;	// for texture mapping the the future.
@@ -350,7 +350,7 @@ private:
 
 	Spring* picked_spring_ = nullptr;
 	Point* picked_point_ = nullptr;
-	int x_size_, z_size_;
+	
 	float time_ = 0.0f;
 
 	const float struct_k_ = 100.0;	// spring constant of bending springs

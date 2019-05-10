@@ -50,6 +50,10 @@ void GUI::assignMesh(Mesh* mesh)
 	// center_ = mesh_->getCenter();
 }
 
+void GUI::assignCloth(Cloth* cloth){
+	cloth_ = cloth;
+}
+
 
 
 void GUI::keyCallback(int key, int scancode, int action, int mods)
@@ -144,15 +148,12 @@ void GUI::keyCallback(int key, int scancode, int action, int mods)
 		}
 	} 
 	else if(key == GLFW_KEY_R && action != GLFW_RELEASE) {
-	
-		timer.reset();
-		timer.start();
-		time_ = 0.0;
-		play_ = false;
-		if(mesh_->keyframes.size() > 0){
-			mesh_->setFirstFrame();
-		}
-		mesh_->updateAnimation();
+		int xsize = cloth_->x_size_;
+		int zsize = cloth_->z_size_;
+		// cloth_->resetCloth();
+		
+		cloth_ = new Cloth(xsize, zsize);
+		resetted = true;
 
 	}else if (key == GLFW_KEY_V && action != GLFW_RELEASE) {
 		if(mesh_->keyframes.size() > 0){
