@@ -149,80 +149,6 @@ private:
 
 #define PI 3.1416f
 
-struct SpringNode {
-public:
-	SpringNode(int index, glm::vec3 init_pos, glm::vec3 curr_pos, float mass, bool init_fixed = false);
-	~SpringNode();
-
-	glm::vec3 position;
-	glm::vec3 init_position;
-	glm::vec3 velocity = glm::vec3(0.0f, 0.0f, 0.0f);
-	glm::vec3 force;
-
-	std::vector<SpringNode*> neighbors;
-	std::vector<float> init_nb_dists;
-
-	float mass;
-	bool fixed;
-	bool teared = false;
-	int index;
-
-
-};
-
-
-// struct AnchorNode {
-// public:
-// 	AnchorNode();
-// 	~AnchorNode();
-// 	SpringNode* node;
-// 	glm::vec3 position;	// anchor position
-// };
-
-class MassSpringSystem {
-public:
-	MassSpringSystem(int x_size, int z_size);
-	~MassSpringSystem();
-
-	glm::vec3 computeSingleForce(const SpringNode* curr_node, const SpringNode* nb_node);
-
-	void setNodeFixed(int idx);
-	void setNodeMovable(int idx);
-
-	void refreshCache();	// copy node positions to opengl buffer
-	const glm::vec3* collectNodePositions();
-
-	void animate(float delta_t);
-	void checkTear(SpringNode* curr_node, int nb_idx, float max_deform_rate, std::vector<SpringNode*>& teared_new_nodes);
-
-	void resetSystem();
-	void randomDisturb();
-	float getPeriod() {return T_;}
-
-	std::vector<glm::vec3> node_positions;
-	std::vector<glm::uvec2> line_indices;	// indices for line mesh
-	std::vector<SpringNode*> nodes_;
-
-
-private:
-	bool isIndexValid(int x, int z);
-	int getNodeIndex(int x, int z);
-	const float node_mass_ = 10.0;
-
-	const float spring_k_ = 100.0;
-
-	float T_ = 2 * PI * std::sqrt(node_mass_ / spring_k_);
-
-	// const float energy_loss_ = 0.95;
-	const float damper_ = (0.05) * (2 * std::sqrt(node_mass_ * spring_k_));
-	const float grid_width_ = 1.0;
-	int x_size, z_size;
-	
-
-
-
-};
-
 
 #define G (4*9.8)
 #define PI 3.1416
@@ -232,6 +158,7 @@ private:
 
 struct Spring;
 struct Triangle;
+struct BendSpring;
 
 // Nodes in the spring.
 struct Point {
@@ -285,8 +212,35 @@ struct Spring {
 
 	Point* p1_;
 	Point* p2_;
-	Spring* bend_spring_ = nullptr;	// A bending spring (if there is one) related to this structural spring.
+	BendSpring* bend_spring_ = nullptr;	// A bending spring (if there is one) related to this structural spring.
 									// If this spring itself is a bending spring, this attribute will simply be nullptr.
+	
+	float force_quantity_;
+	glm::vec3 fork;
+	float init_length_;
+	float k_;
+	float max_deform_rate_ = 0.1f;
+	float min_length_, max_length_;
+	bool is_secondary_ = false;
+	bool constrained_ = false;
+
+};
+
+struct BendSpring {
+
+	BendSpring(Point* p1, Point* p2, float k, bool is_secondary = false);	// k is the spring constant
+	~BendSpring();
+
+	void calcForce();	
+	void replaceTriangle(Triangle* t_old, Triangle* t_new);
+	void replacePoint(Point* p_old, Point* p_new);
+	void removeBendSpring();
+
+	std::vector<Triangle*> triangles_;	// a spring is neighbor to either 1 or 2 triangles.
+
+	Point* p1_;
+	Point* p2_;
+	
 	
 	float force_quantity_;
 	glm::vec3 fork;
@@ -355,7 +309,7 @@ private:
 
 	const float struct_k_ = 100.0;	// spring constant of bending springs
 	const float bend_sheer_k_ = 20.0;		// spring constant of bending springs. (there bending springs also used as sheering springs)
-	const float damper_ = 0.30;
+	const float damper_ = 0.20;
 	const float point_mass_ = 0.1;	// init mass of every point.
 	const float init_height_ = 50.0;		// init height of the cloth. .e. init z position of all points)
 

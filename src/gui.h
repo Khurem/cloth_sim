@@ -78,7 +78,7 @@ private:
 	int window_width_, window_height_;
 	int view_width_, view_height_;
 	int preview_height_;
-	MassSpringSystem* ms_system_;
+	// MassSpringSystem* ms_system_;
 	bool reset_ms_system_ = false;
 	bool drag_state_ = false;
 	bool control_pressed_ = false;

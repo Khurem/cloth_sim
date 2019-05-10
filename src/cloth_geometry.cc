@@ -166,6 +166,21 @@ Spring::~Spring()
 	}
 }
 
+BendSpring::BendSpring(Point* p1, Point* p2, float k, bool is_secondary):
+			p1_(p1), p2_(p2), k_(k), is_secondary_(is_secondary)
+{
+	init_length_ = glm::length(p1_->position_ - p2_->position_);
+}
+
+
+
+BendSpring::~BendSpring() 
+{
+
+	free;
+	
+}
+
 void Spring::calcForce() {
 	// this->fork = glm::vec3(0.0f, 0.0f,0.0f);
 	float curr_length = glm::length(p1_->position_ - p2_->position_);
@@ -175,16 +190,20 @@ void Spring::calcForce() {
 	float velPos = 0.60f * glm::dot(p1_->velocity_ - p2_->velocity_,p1_->position_ - p2_->position_) / curr_length;
 	float restComp = 20.0f * (curr_length - init_length);
 	this->fork = -((velPos + restComp) * normLen);
-	// float deform_rate =  (init_length - curr_length) / init_length;
-	// printf("%f deforrrm\n", deform_rate);
-	// deform_rate = glm::clamp(deform_rate, -1.0f, 1.0f);
-	// force_quantity_ = deform_rate * k_ * init_length_;
-	// printf("%f force \n", force_quantity_);
-	// float deform_rate = (init_length_ - curr_length) / init_length_;
-	// if(fabs(deform_rate) > max_deform_rate_) {	// constrains. Anti-superelastic.
-	// 	deform_rate = deform_rate * (fabs(deform_rate) / max_deform_rate_);
-	// }
-	// force_quantity_ = deform_rate * k_ * init_length_;
+	
+
+}
+
+void BendSpring::calcForce() {
+	// this->fork = glm::vec3(0.0f, 0.0f,0.0f);
+	float curr_length = glm::length(p1_->position_ - p2_->position_);
+	float init_length = glm::length(p1_->init_position_ - p2_->init_position_);
+	//(glm::dot(p1_->velocity_ - p2_->velocity_, p1_->position_ - p2_->position_)/ curr_length) * 
+	glm::vec3 normLen = (p1_->position_ - p2_->position_) / curr_length;
+	float velPos = 1.10f * glm::dot(p1_->velocity_ - p2_->velocity_,p1_->position_ - p2_->position_) / curr_length;
+	float restComp = 30.0f * (curr_length - init_length);
+	this->fork = -((velPos + restComp) * normLen);
+	
 
 }
 
@@ -229,6 +248,9 @@ Cloth::Cloth(int x_size, int z_size):
 	
 	points[0 * z_size_ + 0]->fixed_ = true;	
 	points[(x_size_ - 1) * z_size_]->fixed_ = true;	
+	points[(x_size_ - 1)/2 * z_size_]->fixed_ = true;	
+	// points[(x_size_ - 1)/4 * z_size_]->fixed_ = true;	
+	// points[3 * (x_size_ - 1)/4 * z_size_]->fixed_ = true;	
 	// create triangles
 	for(int x = 0; x < x_size_; x++) {
 		for(int z = 0; z < z_size_; z++) {
@@ -337,16 +359,13 @@ Cloth::Cloth(int x_size, int z_size):
 
 	// add bending springs
 	for(Spring* spring : springs_) {
-		Point* p1;
-		Point* p2;
+		Point* p1 = spring->p2_;
+		Point* p2 = spring->p1_;
 		if(spring->p1_->grid_x_ < spring->p2_->grid_x_) {
 			p1 = spring->p1_;
 			p2 = spring->p2_;
 		}
-		else {
-			p1 = spring->p2_;
-			p2 = spring->p1_;
-		}
+		
 
 		// create bending springs
 		int bendX1 = -1; 
@@ -380,7 +399,7 @@ Cloth::Cloth(int x_size, int z_size):
 		if((bendX1 >= 0 && bendX1 < x_size_ && bendZ1 >= 0 && bendZ1 < z_size_) && 
 		(bendX2 >= 0 && bendX2 < x_size_ && bendZ2 >= 0 && bendZ2 < z_size_)) {
 			
-			Spring* bend_spring = new Spring(points[bendX1 * z_size_ + bendZ1], 
+			BendSpring* bend_spring = new BendSpring(points[bendX1 * z_size_ + bendZ1], 
 										points[bendX2 * z_size_ + bendZ2],
 										bend_sheer_k_);
 			spring->bend_spring_ = bend_spring;
@@ -400,7 +419,43 @@ Cloth::~Cloth() {
 
 }
 
+void Cloth::refreshCache() {
+	// vertices and uv_coords
+	vertices.clear();
+	cloth_uv_coords.clear();
+	vertex_normals.clear();
+	for(Point* p : points) {
+				float x = 0.0f;
+				float y = 0.0f;
+				float z = 0.0f;
+				for(glm::vec3& face_normal : p->face_normals_) {
+					x += face_normal[0];
+					y += face_normal[1];
+					z += face_normal[2];
+			}
+			float ratio = ((float)p->face_normals_.size());
+			p->vertex_normal_ = glm::vec3(x/ratio, y/ratio, z/ratio ) ;
+	}
 
+	// spring linemesh
+	struct_spring_vertices.clear();
+	for(Spring* s : springs_) {
+		struct_spring_vertices.push_back(s->p1_->position_);
+		struct_spring_vertices.push_back(s->p2_->position_);
+	}
+	for(Triangle* triangle : triangles_) {
+		for(Point* p : triangle->points) {
+			
+			vertices.push_back(p->position_);
+			cloth_uv_coords.push_back(p->uv_coords_);
+			
+			vertex_normals.push_back(p->vertex_normal_);
+		}
+	}
+
+	
+
+}
 
 void Cloth::tear(Spring* s) {
 	// printf("%f this springs one points pos is \n", s->p1_->position_[0]);
@@ -416,32 +471,29 @@ void Cloth::tear(Spring* s) {
 	}
 	Point *p1 = s->p1_;
 	Point *p2 = s->p2_;	
-	glm::vec3 init_center_position = (p1->init_position_ + p2->init_position_) / 2.0f;
-	glm::vec3 curr_center_position = (p1->position_ + p2->position_) / 2.0f;
-	glm::vec2 center_uv_coords = (p1->uv_coords_ + p2->uv_coords_) / 2.0f;
+	
 
-
-	glm::vec3 pp1_curr_pos = p1->position_ + (curr_center_position - p1->position_) * 0.50f;
-	Point* pp1 = new Point(init_center_position, pp1_curr_pos, p1->mass_ / 2.0, center_uv_coords, -1, -1);
-	glm::vec3 pp2_curr_pos = p2->position_ + (curr_center_position - p2->position_) * 0.50f;
-	Point* pp2 = new Point(init_center_position, pp2_curr_pos, p2->mass_ / 2.0, center_uv_coords, -1, -1);
+	glm::vec3 pp1_curr_pos = p1->position_ + ((p1->position_ + p2->position_) / 2.0f - p1->position_) * 0.20f;
+	Point* pp1 = new Point(p1->init_position_, pp1_curr_pos, p1->mass_ , p1->uv_coords_, p1->grid_x_, p1->grid_z_);
+	glm::vec3 pp2_curr_pos = p2->position_ + ((p1->position_ + p2->position_) / 2.0f - p2->position_) * 0.20f;
+	Point* pp2 = new Point(p2->init_position_, pp2_curr_pos, p2->mass_ , p2->uv_coords_, p2->grid_x_, p2->grid_z_);
 	points.push_back(pp1);
 	points.push_back(pp2);
-	Spring* ss1 = new Spring(p1, pp1, struct_k_, true);
-	this->spring_map_[p1][pp1] = ss1;
-	this->spring_map_[pp1][p1] = ss1;
-	p1->springs_.insert(ss1);
-	pp1->springs_.insert(ss1);
+	Spring* tempSpring1 = new Spring(p1, pp1, struct_k_, true);
+	this->spring_map_[p1][pp1] = tempSpring1;
+	this->spring_map_[pp1][p1] = tempSpring1;
+	p1->springs_.insert(tempSpring1);
+	pp1->springs_.insert(tempSpring1);
 
-	springs_.insert(ss1);
+	springs_.insert(tempSpring1);
 	
-	Spring* ss2 = new Spring(p2, pp2, struct_k_, true);
-	this->spring_map_[p2][pp2] = ss2;
-	this->spring_map_[pp2][p2] = ss2;
-	p2->springs_.insert(ss2);
-	pp2->springs_.insert(ss2);
+	Spring* tempSpring2 = new Spring(p2, pp2, struct_k_, true);
+	this->spring_map_[p2][pp2] = tempSpring2;
+	this->spring_map_[pp2][p2] = tempSpring2;
+	p2->springs_.insert(tempSpring2);
+	pp2->springs_.insert(tempSpring2);
 
-	springs_.insert(ss2);
+	springs_.insert(tempSpring2);
 
 	for(int x = 0; x < 2; x++){
 
@@ -451,36 +503,36 @@ void Cloth::tear(Spring* s) {
 			// 	break;
 			// 	// printf("PROCESSEDIASDFOIANDFPIENF\n");
 			// }
-			Triangle* tt1 = new Triangle(nb_p1, p1, pp1);
-			Triangle* tt2 = new Triangle(nb_p1, pp2, p2);
+			Triangle* temp1 = new Triangle(nb_p1, p1, pp1);
+			Triangle* temp2 = new Triangle(nb_p1, pp2, p2);
 
-			triangles_.insert(tt1);
-			triangles_.insert(tt2);
+			
 
-			ss1->triangles_.push_back(tt1);
-			ss2->triangles_.push_back(tt2);
+			tempSpring1->triangles_.push_back(temp1);
+			tempSpring2->triangles_.push_back(temp2);
 
-			Spring* ss11 = new Spring(pp1, nb_p1, struct_k_, true);
-			this->spring_map_[pp1][nb_p1] = ss11;
-			this->spring_map_[nb_p1][pp1] = ss11;
-			pp1->springs_.insert(ss11);
-			nb_p1->springs_.insert(ss11);
+			Spring* tempSpring11 = new Spring(pp1, nb_p1, struct_k_, true);
+			this->spring_map_[pp1][nb_p1] = tempSpring11;
+			this->spring_map_[nb_p1][pp1] = tempSpring11;
+			pp1->springs_.insert(tempSpring11);
+			nb_p1->springs_.insert(tempSpring11);
 
-			springs_.insert(ss11);
+			springs_.insert(tempSpring11);
 	
-			Spring* ss12 =  new Spring(pp2, nb_p1, struct_k_, true);
-			this->spring_map_[pp2][ nb_p1] = ss12 ;
-			this->spring_map_[ nb_p1][pp2] = ss12 ;
-			pp2->springs_.insert(ss12 );
-			nb_p1->springs_.insert(ss12 );
+			Spring* tempSpring12 =  new Spring(pp2, nb_p1, struct_k_, true);
+			this->spring_map_[pp2][ nb_p1] = tempSpring12 ;
+			this->spring_map_[ nb_p1][pp2] = tempSpring12 ;
+			pp2->springs_.insert(tempSpring12 );
+			nb_p1->springs_.insert(tempSpring12 );
 
-			springs_.insert(ss12 );
-			ss11->triangles_.push_back(tt1);
-			ss12->triangles_.push_back(tt2);
+			springs_.insert(tempSpring12 );
+			tempSpring11->triangles_.push_back(temp1);
+			tempSpring12->triangles_.push_back(temp2);
 			
-			this->spring_map_[p1][nb_p1]->replaceTriangle(t1, tt1);
-			this->spring_map_[p2][nb_p1]->replaceTriangle(t1, tt2);
-			
+			this->spring_map_[p1][nb_p1]->replaceTriangle(t1, temp1);
+			this->spring_map_[p2][nb_p1]->replaceTriangle(t1, temp2);
+			triangles_.insert(temp1);
+			triangles_.insert(temp2);
 			for(Spring* nb_p1_s : nb_p1->springs_) {
 				if(nb_p1_s->bend_spring_ != nullptr) {
 					delete nb_p1_s->bend_spring_;
@@ -495,6 +547,9 @@ void Cloth::tear(Spring* s) {
 		t1 = t2;
 	}
 	delete t1;
+	s->fork = glm::vec3(0.0f, 0.0f,0.0f);
+	s->p1_->force_ = glm::vec3(0.0f, 0.0f, 0.0f);
+	s->p2_->force_ = glm::vec3(0.0f, 0.0f, 0.0f);
 	s->p1_->springs_.erase(s);
 	s->p2_->springs_.erase(s);
 	springs_.erase(s);
@@ -515,41 +570,7 @@ Point* Cloth::getNeighborPoint(Triangle* t1, Spring* s) {
 }
 
 
-void Cloth::refreshCache() {
-	// vertices and uv_coords
-	vertices.clear();
-	cloth_uv_coords.clear();
-	vertex_normals.clear();
-	for(Point* p : points) {
-				float x = 0.0f;
-				float y = 0.0f;
-				float z = 0.0f;
-				for(glm::vec3& face_normal : p->face_normals_) {
-					x += face_normal[0];
-					y += face_normal[1];
-					z += face_normal[2];
-			}
-			float ratio = ((float)p->face_normals_.size());
-			p->vertex_normal_ = glm::vec3(x/ratio, y/ratio, z/ratio ) ;
-	}
-	for(Triangle* triangle : triangles_) {
-		for(Point* p : triangle->points) {
-			
-			vertices.push_back(p->position_);
-			cloth_uv_coords.push_back(p->uv_coords_);
-			
-			vertex_normals.push_back(p->vertex_normal_);
-		}
-	}
 
-	// spring linemesh
-	struct_spring_vertices.clear();
-	for(Spring* s : springs_) {
-		struct_spring_vertices.push_back(s->p1_->position_);
-		struct_spring_vertices.push_back(s->p2_->position_);
-	}
-
-}
 
 void Cloth::animate(float delta_t) {
 	// clear all forces except for gravity
@@ -609,7 +630,7 @@ void Cloth::animate(float delta_t) {
 		// Update velocity and positions
 		if(!point->fixed_) {
 			glm::vec3 damper_force = -damper_ * point->velocity_;
-			glm::vec3 acceleration = (point->force_ + damper_force) / point->mass_;
+			glm::vec3 acceleration = (point->force_ + damper_force ) / point->mass_;
 			point->velocity_ += acceleration * delta_t  ;
 			point->position_[0] += point->velocity_[0] * delta_t;
 			point->position_[1] += point->velocity_[1] * delta_t;
@@ -671,19 +692,18 @@ void Cloth::animate(float delta_t) {
 
 
 void Cloth::groupNeighbors(Point* p, std::map<int, std::unordered_set<Point*>>& groups) {
+	std::vector<int> uf;
 	std::vector<Point*> neighbors;
-	std::vector<Spring*> sprinbors;
 	for(Spring* s : p->springs_) {
-		Point* nb_point = nullptr;
 		if(s->p1_ == p) {
-			nb_point = s->p2_;
+			neighbors.push_back(s->p2_);
 		}
 		else if(s->p2_ == p) {
-			nb_point = s->p1_;
+			neighbors.push_back(s->p1_);
 		}
-		neighbors.push_back(nb_point);
+		
 	}
-	std::vector<int> uf;
+	std::vector<Spring*> sprinbors;
 	uf.resize(neighbors.size());
 	for(int i = 0; i < uf.size(); i++) {
 		uf[i] = i;
@@ -707,11 +727,11 @@ void Cloth::groupNeighbors(Point* p, std::map<int, std::unordered_set<Point*>>& 
 		}
 	}
 
-	for(int i = 0; i < uf.size(); i++) {
-		if(uf[i] == i) {
-			groups[i] = std::unordered_set<Point*>();
-		}
-	}	
+	// for(int i = 0; i < uf.size(); i++) {
+	// 	if(uf[i] == i) {
+	// 		groups[i] = std::unordered_set<Point*>();
+	// 	}
+	// }	
 
 	for(int i = 0; i < uf.size(); i++) {
 		if(containsSpring(p, neighbors[i])) {
@@ -720,6 +740,10 @@ void Cloth::groupNeighbors(Point* p, std::map<int, std::unordered_set<Point*>>& 
 				temp = uf[temp];
 			}
 			int group_num = temp;
+			// if(groups[group_num] == nullptr){
+			// 	groups[group_num] = std::unordered_set<Point*>();
+			// }
+			
 			groups[group_num].insert(neighbors[i]);
 		}
 		
@@ -756,11 +780,11 @@ void Cloth::duplicatePoints(Point* p, std::map<int, std::unordered_set<Point*>>&
 		p_copy->fixed_ = p->fixed_;
 		p_copy->old_position_ = p->old_position_;
 		new_points.push_back(p_copy);
-		for(Point* nb_point : group_points) {
-			Spring* s = this->spring_map_[p][nb_point];
+		for(Point* neigbor : group_points) {
+			Spring* s = this->spring_map_[p][neigbor];
 			p->springs_.erase(s);
-			this->spring_map_[p][nb_point] = nullptr;
-			this->spring_map_[nb_point][p] = nullptr;
+			this->spring_map_[p][neigbor] = nullptr;
+			this->spring_map_[neigbor][p] = nullptr;
 
 			// s->replacePoint(p, p_copy);
 			if(s->p1_ == p) {
@@ -770,8 +794,8 @@ void Cloth::duplicatePoints(Point* p, std::map<int, std::unordered_set<Point*>>&
 				s->p2_ = p_copy;
 			}
 			p_copy->springs_.insert(s);
-			this->spring_map_[p_copy][nb_point] = s;
-			this->spring_map_[nb_point][p_copy] = s;
+			this->spring_map_[p_copy][neigbor] = s;
+			this->spring_map_[neigbor][p_copy] = s;
 			// printf("galfsdf2\n");
 
 			for(Triangle* t : s->triangles_) {	
@@ -798,7 +822,9 @@ void Cloth::setCurrentSpring() {
 		float curr_distance = line_segment_distance_copy(pick_ray_start, pick_ray_end, s->p1_->position_, s->p2_->position_);
 		if(curr_distance < SPRING_CYLINDER_RADIUS && curr_distance < min_distance) {
 			min_distance = curr_distance;
-			picked_spring_ = s;
+			if(s != nullptr){
+				picked_spring_ = s;
+			}
 		}
 	}
 }
