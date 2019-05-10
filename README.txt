@@ -1,18 +1,10 @@
 Name: Khurem Dehri
 EID: kd22374
 
-All basic requirements have been fully implemented.
+Basic cloth simulation with the ability to tear and disturb.
 
-Extra Credit:
+To tear the cloth, just left-click over any portion of the cloth.
 
-If you press 'V' it will loop through all of the keyframes thus far and create a video out of them for you. Uses ffmpeg
+To disturb, press and hold control and then left-click any portions to disturb and drag.
 
-If you press 'O' you'll enable SQUAD spline interpolation, where you'll see movements become a bit more nuanced
-
-Scroll Bar is also fully implemented
-
-A video called bonusanim.mp4 is included for the cool animation bonus points.
-
-Pressing 'K' will up the sampling for Anti-aliasing to 64
-
-Thanks
+BUGS AND WARNING INFORMATION:
