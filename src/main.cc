@@ -510,6 +510,7 @@ int main(int argc, char* argv[])
 #endif
 		if(gui.resetted){
 			gui.resetted = false;
+			timer = new TicTocTimer;
 			*timer = tic();
 			cloth = gui.cloth_;
 		}
@@ -561,8 +562,7 @@ int main(int argc, char* argv[])
 		}
 
 		
-		float delta_t = (float) toc(timer) * gui.getTimeSpeed();
-		delta_t *= 1.0;
+		float delta_t = (float) toc(timer);
 		cloth->animate(delta_t);
 		// Draw the model
 // 		if (draw_object) {

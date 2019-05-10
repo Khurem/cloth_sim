@@ -274,7 +274,7 @@ struct Spring {
 	Spring(Point* p1, Point* p2, float k, bool is_secondary = false);	// k is the spring constant
 	~Spring();
 
-	void computeForceQuantity();	// compute the force quantity, and store it in force_quantity_
+	void calcForce();	// compute the force quantity, and store it in force_quantity_
 	void applyForce();	// compute two force vectors, and apply them to two Points connected to the spring.
 	void replaceTriangle(Triangle* t_old, Triangle* t_new);
 	void replacePoint(Point* p_old, Point* p_new);
@@ -330,7 +330,7 @@ private:
 	void tear(Spring* s);
 	void collisionWithFloor();
 	Point* getNeighborPoint(Triangle* t1, Spring* s);
-	bool containsStructSpring(Point* p1, Point* p2);
+	bool containsSpring(Point* p1, Point* p2);
 	Spring* addStructSpring(Point* p1, Point* p2, float k, bool is_secondary);
 	Spring* getStructSpring(Point* p1, Point* p2);
 	void removeStructSpring(Spring* s);
