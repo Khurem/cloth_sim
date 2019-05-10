@@ -213,6 +213,7 @@ struct Spring {
 	float max_deform_rate_ = 0.1f;
 	float min_length_, max_length_;
 	bool constrained_ = false;
+	bool noTear = false;
 
 };
 

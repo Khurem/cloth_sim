@@ -78,11 +78,7 @@ void GUI::keyCallback(int key, int scancode, int action, int mods)
 		glfwSetWindowShouldClose(window_, GL_TRUE);
 		return ;
 	}
-	if (key == GLFW_KEY_S && (mods & GLFW_MOD_CONTROL)) {
-		if (action == GLFW_RELEASE)
-			mesh_->saveAnimationTo("animation.json");
-		return ;
-	}
+	
 
 	if (mods == 0 && captureWASDUPDOWN(key, action))
 		return ;
@@ -123,13 +119,8 @@ void GUI::keyCallback(int key, int scancode, int action, int mods)
 			}
 		}
 	}
-	else if (key == GLFW_KEY_SPACE && action != GLFW_RELEASE) {
-			mesh_->changeCurrentSkeleton(current_frame);
-	}
-	else if (key == GLFW_KEY_F && action != GLFW_RELEASE) {
-		mesh_->addKeyframe();
-		showPrev = true;
-	} 
+	
+	
 	else if (key == GLFW_KEY_P && action != GLFW_RELEASE) {
 		// printf("do we have keyframes ready to roll??%d\n", mesh_->keyframes.size());
 		if(!play_) {

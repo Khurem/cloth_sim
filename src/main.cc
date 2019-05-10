@@ -36,7 +36,7 @@ const char* cmd = "ffmpeg -r 30 -f rawvideo -pix_fmt rgba -s 960x720 -i - "
 FILE* file_open;
 bool if_file_open = false;
 int* v_buffer = new int[main_view_width * main_view_height];
-const std::string window_title = "Animation";
+const std::string window_title = "Cloth";
 
 const char* vertex_shader =
 #include "shaders/default.vert"

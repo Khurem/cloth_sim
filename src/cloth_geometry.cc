@@ -455,6 +455,7 @@ void Cloth::tear(Spring* s) {
 	points.push_back(pp1);
 	points.push_back(pp2);
 	Spring* tempSpring1 = new Spring(p1, pp1, struct_k_);
+	tempSpring1->noTear = true;
 	this->spring_map_[p1][pp1] = tempSpring1;
 	this->spring_map_[pp1][p1] = tempSpring1;
 	p1->springs_.insert(tempSpring1);
@@ -463,6 +464,7 @@ void Cloth::tear(Spring* s) {
 	springs_.insert(tempSpring1);
 	
 	Spring* tempSpring2 = new Spring(p2, pp2, struct_k_);
+	tempSpring2->noTear = true;
 	this->spring_map_[p2][pp2] = tempSpring2;
 	this->spring_map_[pp2][p2] = tempSpring2;
 	p2->springs_.insert(tempSpring2);
@@ -492,6 +494,7 @@ void Cloth::tear(Spring* s) {
 			tempSpring2->triangles_.push_back(temp2);
 
 			Spring* tempSpring11 = new Spring(pp1, nb_p1, struct_k_);
+			tempSpring11->noTear = true;
 			this->spring_map_[pp1][nb_p1] = tempSpring11;
 			this->spring_map_[nb_p1][pp1] = tempSpring11;
 			pp1->springs_.insert(tempSpring11);
@@ -500,6 +503,7 @@ void Cloth::tear(Spring* s) {
 			springs_.insert(tempSpring11);
 	
 			Spring* tempSpring12 =  new Spring(pp2, nb_p1, struct_k_);
+			tempSpring12->noTear = true;
 			this->spring_map_[pp2][ nb_p1] = tempSpring12 ;
 			this->spring_map_[ nb_p1][pp2] = tempSpring12 ;
 			pp2->springs_.insert(tempSpring12 );
@@ -662,7 +666,7 @@ void Cloth::animate(float delta_t) {
 	setCurrentSpring();
 	
 	if(picked_spring_ ) {
-		if(to_tear ){//&& !picked_spring_->is_secondary_) {
+		if(to_tear && !picked_spring_->noTear) {
 			tear(picked_spring_);
 		}
 	}
