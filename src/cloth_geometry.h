@@ -243,13 +243,13 @@ struct BendSpring {
 class Cloth {
 
 public:
-	Cloth(int x_size, int z_size);
+	Cloth(int x_size, int y_size);
 	~Cloth();
 	void animate(float delta_t);	// recalculate the forces, velocities and positions. Finally update cache
 	
 	void resetCloth();
 	void setCurrentSpring();
-	int x_size_, z_size_;
+	int x_size_, y_size_;
 	Point* picked_point_ = nullptr;
 	std::vector<glm::vec3> vertices;		
 	std::vector<glm::vec2> cloth_uv_coords;	

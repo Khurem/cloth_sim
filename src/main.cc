@@ -160,8 +160,8 @@ int main(int argc, char* argv[])
 	std::vector<glm::uvec3> floor_faces;
 	create_floor(floor_vertices, floor_faces);
 	int cloth_x_size = 16;
-	int cloth_z_size = 16;
-	Cloth *cloth = new Cloth(cloth_x_size, cloth_z_size);
+	int cloth_y_size = 16;
+	Cloth *cloth = new Cloth(cloth_x_size, cloth_y_size);
 	gui.assignCloth(cloth);
 	TicTocTimer *timer = new TicTocTimer;
 	*timer = tic();

@@ -204,15 +204,15 @@ void Cloth::resetCloth() {
 }
 
 
-Cloth::Cloth(int x_size, int z_size):
-		x_size_(x_size), z_size_(z_size)
+Cloth::Cloth(int x_size, int y_size):
+		x_size_(x_size), y_size_(y_size)
 {
 	// build grid
 	float total_x_width = glm::round((x_size_ - 1) );
-	float total_z_width = glm::round((z_size_ - 1 ));
+	float total_z_width = glm::round((y_size_ - 1 ));
 	for(int x = 0; x < x_size_; x++) {
 		float z_offset = (x % 2 == 0)? 0.0 : (0.5 );
-		for(int z = 0; z < z_size_; z++) {
+		for(int z = 0; z < y_size_; z++) {
 			float pos_x = x , pos_z = z + z_offset;
 			glm::vec3 position(pos_x, init_height_, pos_z);
 			glm::vec2 uv_coords(pos_x / total_x_width, pos_z / total_z_width);
@@ -223,12 +223,12 @@ Cloth::Cloth(int x_size, int z_size):
 	
 	
 	
-	points[0 * z_size_ + 0]->fixed_ = true;	
-	points[(x_size_ - 1) * z_size_]->fixed_ = true;	
-	points[(x_size_ - 1)/2 * z_size_]->fixed_ = true;	
+	points[0 * y_size_ + 0]->fixed_ = true;	
+	points[(x_size_ - 1) * y_size_]->fixed_ = true;	
+	points[(x_size_ - 1)/2 * y_size_]->fixed_ = true;	
 
 	for(int x = 0; x < x_size_; x++) {
-		for(int z = 0; z < z_size_; z++) {
+		for(int z = 0; z < y_size_; z++) {
 			Triangle* triangle = new Triangle(nullptr, nullptr, nullptr);
 			Triangle* triangle2 = new Triangle(nullptr, nullptr, nullptr);
 			int zee = 1;
@@ -239,25 +239,25 @@ Cloth::Cloth(int x_size, int z_size):
 				zee = 0;
 				flip = false;
 			}
-			// x >= 0 && x < x_size_ && z >= 0 && z < z_size_
+			// x >= 0 && x < x_size_ && z >= 0 && z < y_size_
 				
-				if((x >= 0 && x < x_size_ && (z + 1) >= 0 && (z + 1) < z_size_) && 
-				((x + 1) >= 0 && (x + 1) < x_size_ && (z + zee) >= 0 && (z + zee) < z_size_)) {
+				if((x >= 0 && x < x_size_ && (z + 1) >= 0 && (z + 1) < y_size_) && 
+				((x + 1) >= 0 && (x + 1) < x_size_ && (z + zee) >= 0 && (z + zee) < y_size_)) {
 					
 					
 					
-					triangle->points.push_back(points[x * z_size_ + z]);
-					triangle->points.push_back(points[x * z_size_ + z+1 ]);
-					triangle->points.push_back(points[(x + 1) * z_size_ + (z + zee)]);
+					triangle->points.push_back(points[x * y_size_ + z]);
+					triangle->points.push_back(points[x * y_size_ + z+1 ]);
+					triangle->points.push_back(points[(x + 1) * y_size_ + (z + zee)]);
 					oneD = true;
 					
 				}
 				
-				if((x >= 0 && x < x_size_ && (z + 1) >= 0 && (z + 1) < z_size_) &&
-				( (x - 1) >= 0 && (x - 1) < x_size_ && (z + zee) >= 0 && (z + zee) < z_size_)) {
-					triangle2->points.push_back(points[x * z_size_ + z]);
-					triangle2->points.push_back(points[(x - 1) * z_size_ + (z + zee)]);
-					triangle2->points.push_back(points[(x) * z_size_ + (z + 1)]);
+				if((x >= 0 && x < x_size_ && (z + 1) >= 0 && (z + 1) < y_size_) &&
+				( (x - 1) >= 0 && (x - 1) < x_size_ && (z + zee) >= 0 && (z + zee) < y_size_)) {
+					triangle2->points.push_back(points[x * y_size_ + z]);
+					triangle2->points.push_back(points[(x - 1) * y_size_ + (z + zee)]);
+					triangle2->points.push_back(points[(x) * y_size_ + (z + 1)]);
 					twoD = true;
 				}
 			
@@ -371,11 +371,11 @@ Cloth::Cloth(int x_size, int z_size):
 
 		 
 		 
-		if((bendX1 >= 0 && bendX1 < x_size_ && bendZ1 >= 0 && bendZ1 < z_size_) && 
-		(bendX2 >= 0 && bendX2 < x_size_ && bendZ2 >= 0 && bendZ2 < z_size_)) {
+		if((bendX1 >= 0 && bendX1 < x_size_ && bendZ1 >= 0 && bendZ1 < y_size_) && 
+		(bendX2 >= 0 && bendX2 < x_size_ && bendZ2 >= 0 && bendZ2 < y_size_)) {
 			
-			BendSpring* bend_spring = new BendSpring(points[bendX1 * z_size_ + bendZ1], 
-										points[bendX2 * z_size_ + bendZ2],
+			BendSpring* bend_spring = new BendSpring(points[bendX1 * y_size_ + bendZ1], 
+										points[bendX2 * y_size_ + bendZ2],
 										bend_sheer_k_);
 			spring->bend_spring_ = bend_spring;
 		}

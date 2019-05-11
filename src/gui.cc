@@ -134,7 +134,7 @@ void GUI::keyCallback(int key, int scancode, int action, int mods)
 	} 
 	else if(key == GLFW_KEY_R && action != GLFW_RELEASE) {
 		int xsize = cloth_->x_size_;
-		int zsize = cloth_->z_size_;
+		int zsize = cloth_->y_size_;
 		// cloth_->resetCloth();
 		
 		cloth_ = new Cloth(xsize, zsize);
