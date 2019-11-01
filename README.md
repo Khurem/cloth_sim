@@ -1,5 +1,4 @@
 Name: Khurem Dehri
-EID: kd22374
 
 Mass Sprin Physical Simulation of Cloth:
 ----------------------------------------
@@ -10,6 +9,8 @@ To tear the cloth, just left-click over any portion of the cloth.
 To disturb, press and hold 'Ctrl' and then left-click any portions to disturb and drag.
 
 If there are bugs during runtime(hint: there will be), press 'R' to reset cloth. If bugs are still not alleviated, press Esc and start program over
+
+![Output sample](https://github.com/khurem/cloth_sim/gifs/output_opt.gif)
 
 TO MAKE AND RUN:
 ----------------
