@@ -1,6 +1,6 @@
 Name: Khurem Dehri
 
-Mass Sprin Physical Simulation of Cloth:
+Mass Spring Physical Simulation of Cloth:
 ----------------------------------------
 Basic cloth simulation with the ability to tear and disturb.
 
@@ -10,7 +10,7 @@ To disturb, press and hold 'Ctrl' and then left-click any portions to disturb an
 
 If there are bugs during runtime(hint: there will be), press 'R' to reset cloth. If bugs are still not alleviated, press Esc and start program over
 
-![Output sample](https://github.com/khurem/cloth_sim/gifs/output_opt.gif)
+![Output sample](https://github.com/Khurem/cloth_sim/gifs/output_opt.gif)
 
 TO MAKE AND RUN:
 ----------------
