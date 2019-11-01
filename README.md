@@ -10,7 +10,7 @@ To disturb, press and hold 'Ctrl' and then left-click any portions to disturb an
 
 If there are bugs during runtime(hint: there will be), press 'R' to reset cloth. If bugs are still not alleviated, press Esc and start program over
 
-![Output sample](https://github.com/Khurem/cloth_sim/gifs/output_opt.gif)
+![Output sample](https://github.com/Khurem/cloth_sim/blob/master/gifs/output_opt.gif)
 
 TO MAKE AND RUN:
 ----------------
@@ -21,6 +21,8 @@ cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
 make -j8 (or make cloth)
 ./bin/cloth
+
+![Output sample2](https://github.com/Khurem/cloth_sim/blob/master/gifs/output_opt2.gif)
 
 BUGS AND WARNING INFORMATION:
 -----------------------------
